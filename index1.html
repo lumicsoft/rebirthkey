@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Dashboard | RebirthKey</title>
+    <title>Elite Dashboard | RebirthKey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,173 +12,121 @@
     <style>
         :root {
             --gold: #ffd700;
-            --bg-main: #060a08;
+            --gold-glow: rgba(255, 215, 0, 0.4);
+            --bg-dark: #060a08;
         }
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg-main);
+            background: var(--bg-dark);
             color: white; 
-            background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 70%);
+            background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 80%);
         }
         .orbitron { font-family: 'Orbitron', sans-serif; }
         
-        /* Premium Golden Border */
+        /* Golden Section Styling */
         .gold-border {
             background: #000000;
-            border: 1px solid rgba(255, 215, 0, 0.25);
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: 0.3s ease;
-        }
-        .gold-border:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.1); }
-
-        /* Active Package State */
-        .pkg-active {
-            border: 2px solid var(--gold) !important;
-            background: linear-gradient(145deg, #121a14, #000000) !important;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2) !important;
-        }
-
-        .btn-gold {
-            background: linear-gradient(135deg, #ffd700, #b8860b);
-            color: black; font-weight: 900; border-radius: 12px;
-            text-transform: uppercase; transition: 0.3s;
-        }
-        .btn-gold:hover { transform: scale(1.02); filter: brightness(1.1); }
-        
-        .status-badge {
-            background: rgba(34, 197, 94, 0.1);
-            color: #22c55e;
-            padding: 4px 12px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.05);
             border-radius: 20px;
-            font-size: 10px;
-            border: 1px solid rgba(34, 197, 94, 0.2);
         }
 
-        .icon-circle {
-            width: 36px; height: 36px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--gold);
+        /* Floating Income Boxes (3 per line) */
+        .income-card {
+            background: linear-gradient(145deg, #0a110d, #000000);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            padding: 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: 0.3s;
         }
+        .income-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+
+        /* Package Status UI */
+        .pkg-active { border: 2px solid var(--gold) !important; background: rgba(255, 215, 0, 0.02) !important; }
+        .status-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; display: inline-block; }
+        .active-tag { background: #166534; color: #4ade80; border: 1px solid #22c55e; }
+        .inactive-tag { background: #450a0a; color: #f87171; border: 1px solid #ef4444; }
+
+        .btn-action {
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            color: black; font-weight: 900; border-radius: 10px;
+            text-transform: uppercase; transition: 0.3s; width: 100%; padding: 10px;
+        }
+        .icon-box { color: var(--gold); }
     </style>
 </head>
 <body class="pb-20">
 
     <script src="components.js"></script>
 
-    <main class="max-w-7xl mx-auto px-4 pt-8">
+    <main class="max-w-7xl mx-auto px-4 pt-10">
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="lg:col-span-2 gold-border p-6 flex items-center justify-between flex-wrap gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 bg-yellow-500/10 rounded-2xl border border-yellow-500/30 flex items-center justify-center">
-                        <i data-lucide="user-check" class="text-yellow-500"></i>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            <div class="lg:col-span-2 gold-border p-6 flex flex-wrap items-center justify-between gap-6">
+                <div class="flex items-center gap-5">
+                    <div class="w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+                        <i data-lucide="shield-check" class="text-yellow-500 w-8 h-8"></i>
                     </div>
                     <div>
-                        <h2 id="wallet-address-display" class="text-lg font-bold orbitron">0x...</h2>
-                        <div class="flex gap-3 mt-1">
-                            <span class="status-badge orbitron font-bold">● ACTIVE USER</span>
-                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase mt-1">Joined: Loading...</span>
+                        <h2 id="wallet-address-display" class="text-xl font-black orbitron">0x...Syncing</h2>
+                        <div class="flex gap-4 mt-1">
+                            <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron">ID: #0</span>
+                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase">Joined: --/--/--</span>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-6">
-                    <div class="text-center">
-                        <p class="text-[9px] text-gray-500 uppercase font-black">Direct Team</p>
-                        <p id="direct-count" class="text-2xl font-black orbitron text-white">0</p>
-                    </div>
-                    <div class="text-center border-l border-white/10 pl-6">
-                        <p class="text-[9px] text-gray-500 uppercase font-black">User ID</p>
-                        <p id="user-id-display" class="text-2xl font-black orbitron text-yellow-500">#0</p>
-                    </div>
+                <div class="text-center bg-yellow-500/5 px-6 py-2 rounded-xl border border-yellow-500/10">
+                    <p class="text-[9px] text-gray-500 uppercase font-black">Direct Team</p>
+                    <p id="direct-count" class="text-2xl font-black orbitron">0</p>
                 </div>
             </div>
 
-            <div class="gold-border p-6">
-                <p class="text-[10px] text-yellow-500 font-black orbitron uppercase mb-3 tracking-widest text-center">Your Referral Link</p>
-                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/5">
-                    <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono px-2">
-                    <button onclick="copyLink()" class="p-2 text-yellow-500 hover:bg-yellow-500/10 rounded-lg">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
+            <div class="gold-border p-6 flex flex-col justify-center">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-3 text-center tracking-widest">Referral Program</p>
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/5">
+                    <input id="refURL" type="text" readonly value="Syncing Link..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono">
+                    <button onclick="copyLink()" class="text-yellow-500 hover:scale-110 transition"><i data-lucide="copy" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <div class="lg:col-span-3 gold-border p-8">
-                <h3 class="orbitron font-black text-white text-sm uppercase mb-8 flex items-center gap-2">
-                    <i data-lucide="pie-chart" class="text-yellow-500 w-5 h-5"></i> Earnings Dashboard
-                </h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="user-plus" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Direct Income</p>
-                        <p id="direct-earnings" class="text-lg font-black orbitron">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="git-branch" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Level Income</p>
-                        <p id="level-earnings" class="text-lg font-black orbitron">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="grid" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p>
-                        <p id="matrix-earnings" class="text-lg font-black orbitron">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="zap" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p>
-                        <p id="booster-fund" class="text-lg font-black orbitron text-yellow-500">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="moon" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p>
-                        <p id="lunar-fund" class="text-lg font-black orbitron text-cyan-400">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="trending-up" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p>
-                        <p id="singleleg-earnings" class="text-lg font-black orbitron">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="globe" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Daily Income</p>
-                        <p id="daily-earnings" class="text-lg font-black orbitron">0.00</p>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <div class="icon-circle mb-3"><i data-lucide="award" class="w-4 h-4"></i></div>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Reward Income</p>
-                        <p id="reward-earnings" class="text-lg font-black orbitron">0.00</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="gold-border p-8 bg-gradient-to-br from-yellow-500/5 to-transparent flex flex-col justify-between">
-                <div>
-                    <p class="text-[10px] text-gray-500 font-black uppercase mb-2">Available Balance</p>
-                    <div class="flex items-center gap-3 mb-6">
-                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="w-6 h-6">
-                        <h2 id="balance-large" class="text-4xl font-black orbitron">0.00</h2>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <button onclick="handleWithdraw()" class="btn-gold w-full py-4 text-sm tracking-widest">Withdraw</button>
-                    <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase">
-                        <span>Income Cap Left:</span>
-                        <span id="income-cap" class="text-red-500">0.00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="orbitron font-black text-xl text-white mb-8 flex items-center gap-3">
-            <i data-lucide="briefcase" class="text-yellow-500"></i> SELECT <span class="text-yellow-500">PACKAGE</span>
+        <h3 class="orbitron font-black text-sm text-gray-400 mb-6 flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-yellow-500"></i> EARNINGS OVERVIEW
         </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+            <div class="income-card"><i data-lucide="users" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Direct Income</p><p id="direct-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="layers" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Level Income</p><p id="level-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="grid" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="zap" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p><p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="moon" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p><p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="trending-up" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="globe" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Daily Income</p><p id="daily-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="award" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Total Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card bg-yellow-500/5"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-yellow-500 uppercase font-bold">Total Earned</p><p id="total-earned" class="text-xl font-black orbitron">0.00</p></div></div>
+        </div>
 
-        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="gold-border p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div class="flex-grow">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-2">Withdrawable Balance</p>
+                <div class="flex items-baseline gap-3">
+                    <span id="balance-large" class="text-6xl font-black orbitron">0.00</span>
+                    <span class="text-xl text-gray-500 font-bold">USDT</span>
+                </div>
+            </div>
+            <div class="w-full md:w-80">
+                <button onclick="handleWithdraw()" class="btn-action !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4">Process Withdrawal</button>
+                <div class="flex justify-between text-[10px] font-bold">
+                    <span class="text-gray-500 uppercase">Capping Left:</span>
+                    <span id="income-cap" class="text-red-500 orbitron">0.00 USDT</span>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="orbitron font-black text-2xl text-white mb-8">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
+        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             </div>
 
     </main>
@@ -187,46 +135,42 @@
     <script>
         lucide.createIcons();
 
-        // 1. Package List from your Contract
-        const packages = [
+        const packageData = [
             { id: 0, price: 5 }, { id: 1, price: 44 }, { id: 2, price: 65 }, 
             { id: 3, price: 106 }, { id: 4, price: 187 }, { id: 5, price: 348 }, 
             { id: 6, price: 669 }, { id: 7, price: 1310 }, { id: 8, price: 2591 }, 
             { id: 9, price: 5152 }, { id: 10, price: 10273 }, { id: 11, price: 20514 }
         ];
 
-        // 2. Load Packages with "Active" Check
         async function renderPackages() {
             const container = document.getElementById('package-grid');
-            let userMaxPkg = -1;
+            
+            // Dummy logic: maan lijiye user ka last buy package level 2 hai (id=2)
+            // Aap window.contract.users(addr).currentPackageId se ise sync karenge
+            const userCurrentPkgId = -1; 
 
-            // Contract se check karein ki user ne last package kaunsa liya hai
-            if (window.contract && window.userAddress) {
-                try {
-                    const userData = await window.contract.users(window.userAddress);
-                    // Yahan logic depend karta hai aapne contract mein "lastPackage" kaise store kiya hai
-                    // Agar hum assume karein user ke statistics se pta chalega:
-                    // userMaxPkg = userData.currentPackageId; 
-                } catch (e) { console.error(e); }
-            }
-
-            container.innerHTML = packages.map(pkg => {
-                const isActive = pkg.id <= userMaxPkg; // Pseudo logic
+            container.innerHTML = packageData.map(pkg => {
+                const isActive = pkg.id <= userCurrentPkgId; 
                 return `
-                <div class="gold-border p-6 flex flex-col justify-between ${isActive ? 'pkg-active' : ''}" id="card-${pkg.id}">
+                <div class="gold-border p-6 flex flex-col justify-between ${isActive ? 'pkg-active' : ''}">
                     <div>
-                        <div class="flex justify-between mb-4">
-                            <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Rebirth Tier ${pkg.id + 1}</span>
-                            ${isActive ? '<span class="status-badge">ACTIVE</span>' : ''}
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[9px] font-bold text-gray-500 uppercase italic">Tier ${pkg.id + 1}</span>
+                            <i data-lucide="package" class="w-4 h-4 text-yellow-500/50"></i>
                         </div>
-                        <h4 class="text-3xl font-black orbitron mb-6">$${pkg.price} <span class="text-xs text-gray-500">USDT</span></h4>
+                        <h4 class="text-3xl font-black orbitron mb-6">$${pkg.price}</h4>
                     </div>
-                    <button onclick="handleBuyPackage(${pkg.id})" 
-                            class="${isActive ? 'hidden' : 'btn-gold'} py-3 text-[10px] tracking-widest" 
-                            id="btn-${pkg.id}">
-                        PURCHASE NOW
-                    </button>
-                    ${isActive ? '<p class="text-center text-yellow-500 text-[10px] font-black orbitron">YOU OWN THIS</p>' : ''}
+                    
+                    <div class="mt-auto">
+                        <span class="status-tag ${isActive ? 'active-tag' : 'inactive-tag'}">
+                            ${isActive ? 'Active' : 'Inactive'}
+                        </span>
+                        <button onclick="handleBuyPackage(${pkg.id})" 
+                                class="btn-action ${isActive ? 'opacity-50 cursor-not-allowed' : ''}"
+                                ${isActive ? 'disabled' : ''}>
+                            ${isActive ? 'Already Owned' : 'Buy Now'}
+                        </button>
+                    </div>
                 </div>
             `}).join('');
             lucide.createIcons();
@@ -237,16 +181,16 @@
             if (refInput.value.includes("Syncing")) return;
             refInput.select();
             navigator.clipboard.writeText(refInput.value);
-            alert("Referral Link Copied!");
+            alert("Referral link copied!");
         }
 
         window.addEventListener('load', () => {
             renderPackages();
-            // Sync balance logic
+            // Sync large balance from smaller display
             setInterval(() => {
-                const b = document.getElementById('withdrawable-display')?.innerText || "0.00";
+                const s = document.getElementById('direct-earnings')?.innerText; // just as example
                 const l = document.getElementById('balance-large');
-                if(l) l.innerText = b;
+                // Real update logic should come from web3-handler.js
             }, 1000);
         });
     </script>
