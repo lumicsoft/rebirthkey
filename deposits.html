@@ -5,99 +5,147 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Explorer | RebirthKey</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { background: #050505; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .tree-node { transition: all 0.3s ease; cursor: pointer; }
-        .tree-node:hover { transform: scale(1.05); border-color: #eab308; }
-        .active-node { border: 2px solid #eab308; background: rgba(234, 179, 8, 0.1); }
-        .line { height: 2px; background: rgba(255,255,255,0.1); flex-grow: 1; }
+        :root { --gold: #ffd700; --bg-dark: #060a08; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-dark); color: white; 
+            background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 80%);
+        }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        .gold-border-fixed {
+            background: rgba(0,0,0,0.6);
+            border: 1.5px solid var(--gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+            border-radius: 24px;
+        }
+
+        /* Tree Styles */
+        .tree-node { 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: pointer; position: relative;
+        }
+        .tree-node:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 5px 15px rgba(255,215,0,0.2); }
+        .active-node { border: 1.5px solid var(--gold) !important; background: rgba(255, 215, 0, 0.05); }
+        .node-label { font-size: 8px; color: #666; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .address-text { font-family: monospace; font-size: 10px; color: #aaa; }
+
+        .line-connector {
+            position: absolute; height: 2px; background: rgba(255,215,0,0.1); z-index: -1;
+        }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-24">
 
-    <nav class="p-4 glass sticky top-0 z-50 flex justify-between items-center">
-        <a href="index1.html" class="text-xl font-black text-yellow-500 italic"><i class="fa-solid fa-arrow-left mr-2"></i> TEAM</a>
-        <button id="connect-btn" class="bg-yellow-500 text-black px-4 py-2 rounded-full font-bold text-sm">Connecting...</button>
-    </nav>
+    <script src="components.js"></script>
 
-    <div class="p-4 max-w-4xl mx-auto space-y-6">
+    <main class="max-w-7xl mx-auto px-4 pt-10">
         
-        <div class="grid grid-cols-3 gap-3">
-            <div class="glass p-4 rounded-3xl text-center">
-                <p class="text-gray-400 text-xs uppercase">Directs</p>
-                <h2 id="direct-count" class="text-2xl font-black text-yellow-500">0</h2>
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h3 class="orbitron font-black text-2xl text-white border-l-4 border-yellow-500 pl-4 uppercase">Team <span class="text-yellow-500">Explorer</span></h3>
+                <p class="text-[10px] text-gray-500 font-bold ml-5 mt-1 tracking-widest uppercase">Explore your 2x2 matrix network</p>
             </div>
-            <div class="glass p-4 rounded-3xl text-center">
-                <p class="text-gray-400 text-xs uppercase">Total Team</p>
-                <h2 id="total-team" class="text-2xl font-black text-cyan-400">0</h2>
+            <a href="index1.html" class="gold-border-fixed px-4 py-2 text-xs font-bold text-yellow-500 hover:bg-yellow-500 hover:text-black transition uppercase">
+                <i data-lucide="arrow-left" class="inline-block w-3 h-3 mr-1"></i> Dashboard
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+            <div class="gold-border-fixed p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-500">
+                    <i data-lucide="users-2"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase font-black">Direct Partners</p>
+                    <p id="direct-count" class="text-xl font-black orbitron text-white">0</p>
+                </div>
             </div>
-            <div class="glass p-4 rounded-3xl text-center">
-                <p class="text-gray-400 text-xs uppercase">Active</p>
-                <h2 class="text-2xl font-black text-green-500">0</h2>
+            <div class="gold-border-fixed p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                    <i data-lucide="sitemap"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase font-black">Total Team Size</p>
+                    <p id="total-team" class="text-xl font-black orbitron text-white">0</p>
+                </div>
+            </div>
+            <div class="gold-border-fixed p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-500">
+                    <i data-lucide="activity"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase font-black">Active Nodes</p>
+                    <p id="active-nodes" class="text-xl font-black orbitron text-white">0</p>
+                </div>
             </div>
         </div>
 
-        <div class="glass p-6 rounded-[2.5rem] relative overflow-hidden">
-            <h3 class="font-bold mb-6 text-center text-gray-400"><i class="fa-solid fa-sitemap mr-2"></i> 2x2 STRUCTURE EXPLORER</h3>
-            
-            <div class="flex flex-col items-center space-y-8">
-                <div id="root-node" onclick="exploreNode(this.innerText)" class="tree-node glass w-32 p-3 rounded-2xl text-center border-2 border-white/20">
-                    <p class="text-[10px] text-gray-500">Main User</p>
-                    <span id="root-addr" class="text-xs font-mono">...</span>
-                </div>
-
-                <div class="w-full flex justify-around relative">
-                    <div id="lvl1-L" onclick="exploreNode(this.getAttribute('data-addr'))" class="tree-node glass w-28 p-3 rounded-2xl text-center border border-white/10">
-                        <p class="text-[10px] text-gray-500 font-bold">L1 - Left</p>
-                        <span class="addr text-[10px] font-mono">Empty</span>
-                    </div>
-                    <div id="lvl1-R" onclick="exploreNode(this.getAttribute('data-addr'))" class="tree-node glass w-28 p-3 rounded-2xl text-center border border-white/10">
-                        <p class="text-[10px] text-gray-500 font-bold">L1 - Right</p>
-                        <span class="addr text-[10px] font-mono">Empty</span>
+        <div class="gold-border-fixed p-8 relative overflow-hidden mb-10">
+            <div class="flex flex-col items-center space-y-12">
+                
+                <div class="flex flex-col items-center">
+                    <div id="root-node" class="tree-node gold-border-fixed w-48 p-4 text-center active-node scale-110">
+                        <span class="node-label">Root Explorer</span>
+                        <p id="root-addr" class="address-text mt-1">Connecting...</p>
                     </div>
                 </div>
 
-                <div class="w-full flex justify-between gap-1">
-                    <div id="lvl2-1" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
-                        <span class="addr text-[8px] font-mono">Empty</span>
+                <div class="w-full flex justify-around max-w-2xl">
+                    <div id="lvl1-L" onclick="exploreNode(this.getAttribute('data-addr'))" class="tree-node gold-border-fixed w-36 p-3 text-center opacity-40">
+                        <span class="node-label">L1 - Left</span>
+                        <p class="address-text addr mt-1 italic">Empty</p>
                     </div>
-                    <div id="lvl2-2" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
-                        <span class="addr text-[8px] font-mono">Empty</span>
-                    </div>
-                    <div id="lvl2-3" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
-                        <span class="addr text-[8px] font-mono">Empty</span>
-                    </div>
-                    <div id="lvl2-4" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
-                        <span class="addr text-[8px] font-mono">Empty</span>
+                    <div id="lvl1-R" onclick="exploreNode(this.getAttribute('data-addr'))" class="tree-node gold-border-fixed w-36 p-3 text-center opacity-40">
+                        <span class="node-label">L1 - Right</span>
+                        <p class="address-text addr mt-1 italic">Empty</p>
                     </div>
                 </div>
-            </div>
-            
-            <button onclick="resetTree()" class="mt-8 w-full py-2 bg-white/5 rounded-xl text-xs text-gray-400 hover:bg-white/10">
-                <i class="fa-solid fa-sync mr-2"></i> Reset to My Tree
-            </button>
-        </div>
 
-        <div class="glass rounded-[2.5rem] p-6">
-            <h3 class="font-bold mb-4"><i class="fa-solid fa-users-viewfinder mr-2"></i> DIRECT PARTNERS</h3>
-            <div id="direct-list" class="space-y-3">
-                <p class="text-center text-gray-500 py-4">Loading partners...</p>
+                <div class="w-full flex justify-between gap-2 max-w-4xl">
+                    <div id="lvl2-1" class="tree-node gold-border-fixed w-28 p-2 text-center opacity-25">
+                        <span class="node-label">L2 - P1</span>
+                        <p class="address-text addr mt-1 text-[8px]">Empty</p>
+                    </div>
+                    <div id="lvl2-2" class="tree-node gold-border-fixed w-28 p-2 text-center opacity-25">
+                        <span class="node-label">L2 - P2</span>
+                        <p class="address-text addr mt-1 text-[8px]">Empty</p>
+                    </div>
+                    <div id="lvl2-3" class="tree-node gold-border-fixed w-28 p-2 text-center opacity-25">
+                        <span class="node-label">L2 - P3</span>
+                        <p class="address-text addr mt-1 text-[8px]">Empty</p>
+                    </div>
+                    <div id="lvl2-4" class="tree-node gold-border-fixed w-28 p-2 text-center opacity-25">
+                        <span class="node-label">L2 - P4</span>
+                        <p class="address-text addr mt-1 text-[8px]">Empty</p>
+                    </div>
+                </div>
+
+                <button onclick="resetTree()" class="orbitron text-[10px] font-black text-yellow-500 tracking-[0.3em] uppercase hover:scale-110 transition">
+                    <i data-lucide="refresh-cw" class="inline-block w-3 h-3 mr-2"></i> Reset to My Position
+                </button>
             </div>
         </div>
 
-    </div>
+        <h3 class="orbitron font-black text-xs text-yellow-500 mb-6 tracking-[0.2em] uppercase">Direct Partner List</h3>
+        <div class="gold-border-fixed overflow-hidden">
+            <div id="direct-list" class="divide-y divide-yellow-500/10">
+                <div class="p-8 text-center text-gray-500 uppercase text-xs font-bold tracking-widest">
+                    <i data-lucide="loader" class="animate-spin w-5 h-5 mx-auto mb-2"></i> Initializing Network Data...
+                </div>
+            </div>
+        </div>
 
-    <div class="fixed bottom-0 left-0 right-0 glass border-t border-white/10 p-4 flex justify-around items-center rounded-t-[2rem]">
-        <a href="index1.html" class="text-gray-500"><i class="fa-solid fa-house text-xl"></i></a>
-        <a href="team.html" class="text-yellow-500"><i class="fa-solid fa-users text-xl"></i></a>
-        <a href="history.html" class="text-gray-500"><i class="fa-solid fa-clock-rotate-left text-xl"></i></a>
-    </div>
+    </main>
 
     <script src="web3-handler.js"></script>
     <script>
+        lucide.createIcons();
         let myAddress = "";
 
         async function initTeamPage() {
@@ -106,9 +154,8 @@
                 return;
             }
             myAddress = await window.signer.getAddress();
-            updateText('root-addr', myAddress.substring(0,6)+"..."+myAddress.substring(38));
+            updateRootDisplay(myAddress);
             
-            // Initial Tree Load
             loadTree(myAddress);
             loadDirects();
         }
@@ -117,8 +164,10 @@
             if(!addr || addr === "0x0000000000000000000000000000000000000000") return;
             
             try {
+                // Assuming contract.getTeamTree2x2 exists in your ABI
                 const tree = await window.contract.getTeamTree2x2(addr);
-                
+                let activeCount = 0;
+
                 const updateNode = (id, nodeAddr) => {
                     const el = document.getElementById(id);
                     const span = el.querySelector('.addr');
@@ -127,11 +176,12 @@
                         el.setAttribute('data-addr', nodeAddr);
                         el.classList.add('active-node');
                         el.style.opacity = "1";
+                        activeCount++;
                     } else {
                         span.innerText = "Empty";
                         el.setAttribute('data-addr', "");
                         el.classList.remove('active-node');
-                        el.style.opacity = "0.4";
+                        el.style.opacity = "0.25";
                     }
                 };
 
@@ -142,34 +192,42 @@
                 updateNode('lvl2-3', tree.level2_Pos3);
                 updateNode('lvl2-4', tree.level2_Pos4);
 
-            } catch(e) { console.error("Tree Error", e); }
+                document.getElementById('active-nodes').innerText = activeCount;
+
+            } catch(e) { console.error("Tree Sync Error", e); }
         }
 
         async function loadDirects() {
             try {
                 const data = await window.contract.getUserTotalData(myAddress);
-                updateText('direct-count', data.stats[4].toString());
-                
-                // Note: Agar contract mein getDirectList function nahi hai, 
-                // toh hum sirf counts hi dikha sakte hain ya Events fetch karne honge.
+                document.getElementById('direct-count').innerText = data.stats[4].toString();
+                document.getElementById('total-team').innerText = data.stats[5] || '0'; 
+
                 document.getElementById('direct-list').innerHTML = `
-                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-2xl">
-                        <span class="text-xs font-mono text-gray-400">Total Referrals Found</span>
-                        <span class="font-bold text-yellow-500">${data.stats[4]}</span>
+                    <div class="flex justify-between items-center p-5 bg-white/5 hover:bg-yellow-500/5 transition group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full border border-yellow-500/20 flex items-center justify-center text-yellow-500 text-[10px] orbitron font-bold">1</div>
+                            <span class="text-xs font-mono text-gray-400 group-hover:text-white transition">Scanning referrals on blockchain...</span>
+                        </div>
+                        <span class="orbitron text-xs font-black text-yellow-500">${data.stats[4]} Found</span>
                     </div>
                 `;
             } catch(e) { console.error(e); }
         }
 
         function exploreNode(addr) {
-            if(!addr) return;
-            document.getElementById('root-addr').innerText = addr.substring(0,6)+"..."+addr.substring(38);
+            if(!addr || addr === "") return;
+            updateRootDisplay(addr);
             loadTree(addr);
         }
 
         function resetTree() {
-            document.getElementById('root-addr').innerText = myAddress.substring(0,6)+"..."+myAddress.substring(38);
+            updateRootDisplay(myAddress);
             loadTree(myAddress);
+        }
+
+        function updateRootDisplay(addr) {
+            document.getElementById('root-addr').innerText = addr.substring(0,10)+"..."+addr.substring(32);
         }
 
         window.addEventListener('load', initTeamPage);
