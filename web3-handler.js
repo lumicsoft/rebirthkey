@@ -2,6 +2,12 @@ let provider, signer, contract, usdtContract;
 const CONTRACT_ADDRESS = "0x453F54E96667D07BaB8d7540Ed1a06aC2691141F"; 
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
+// --- GLOBAL DATA OBJECT FOR DASHBOARD SYNC ---
+window.userData = {
+    currentPackageId: -1,
+    isRegistered: false
+};
+
 // --- NEW ABI FOR REBIRTHKEY CONTRACT ---
 const CONTRACT_ABI = [
     "function register(address _ref) external",
@@ -12,7 +18,8 @@ const CONTRACT_ABI = [
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
     "function getUserTotalData(address _user) view returns (uint256[6] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
-    "function packages(uint256) view returns (uint256 id, uint256 price, bool active)"
+    "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
+    "function getUserActivePackages(address _user) view returns (bool[12])" // Package tracking ke liye
 ];
 
 const USDT_ABI = [
@@ -106,7 +113,6 @@ window.handleLogin = async function() {
         localStorage.removeItem('manualLogout');
         
         const userData = await contract.users(userAddress);
-        // Naye contract mein id 0 se badi matlab registered
         if (userData.id.gt(0)) {
             if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
             window.location.href = "index1.html";
@@ -121,16 +127,12 @@ window.handleLogin = async function() {
 }
 
 window.handleRegister = async function() {
-    console.log("Register function started...");
-    
     try {
-        // 1. Check if Provider exists
         if (!window.ethereum) {
             alert("MetaMask or Trust Wallet not found!");
             return;
         }
 
-        // 2. Re-initialize if signer is missing
         if (!signer) {
             const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
             await tempProvider.send("eth_requestAccounts", []);
@@ -142,7 +144,6 @@ window.handleRegister = async function() {
         const refField = document.getElementById('reg-referrer');
         const referrerAddress = refField ? refField.value.trim() : "";
 
-        // 3. Validation
         if (!ethers.utils.isAddress(referrerAddress)) {
             alert("Please enter a valid Referrer Wallet Address (0x...)");
             return;
@@ -153,16 +154,12 @@ window.handleRegister = async function() {
             return;
         }
 
-        console.log("Registering:", userAddress, "with Ref:", referrerAddress);
-
-        // 4. Update Button UI
         const btn = document.getElementById('reg-btn');
         if(btn) {
             btn.disabled = true;
             btn.innerText = "CONFIRMING IN WALLET...";
         }
 
-        // 5. Send Transaction with Manual Gas Limit (Zaruri hai failure rokne ke liye)
         const tx = await contract.register(referrerAddress, {
             gasLimit: 400000 
         });
@@ -184,23 +181,16 @@ window.handleRegister = async function() {
             btn.disabled = false;
             btn.innerText = "REGISTER NOW";
         }
-        
         let msg = err.reason || err.message || "Unknown error";
-        if(msg.includes("user rejected")) msg = "User cancelled the transaction.";
-        if(msg.includes("revert")) msg = "Transaction Reverted: Maybe already registered or invalid ref.";
-        
         alert("Error: " + msg);
     }
 }
+
 window.handleLogout = function() {
     if (confirm("Do you want to disconnect?")) {
         localStorage.setItem('manualLogout', 'true');
         signer = null;
         contract = null;
-        const connectBtn = document.getElementById('connect-btn');
-        const logoutBtn = document.getElementById('logout-icon-btn');
-        if (connectBtn) connectBtn.innerText = "Connect Wallet";
-        if (logoutBtn) logoutBtn.classList.add('hidden');
         window.location.href = "index.html";
     }
 }
@@ -209,9 +199,7 @@ function showLogoutIcon(address) {
     const btn = document.getElementById('connect-btn');
     const logout = document.getElementById('logout-icon-btn');
     if (btn) btn.innerText = address.substring(0, 6) + "..." + address.substring(38);
-    if (logout) {
-        logout.style.display = 'flex'; 
-    }
+    if (logout) { logout.style.display = 'flex'; }
 }
 
 // --- APP SETUP ---
@@ -233,6 +221,8 @@ async function setupApp(address) {
         const userData = await contract.users(address);
         const isRegistered = userData.id.gt(0);
         const path = window.location.pathname;
+
+        window.userData.isRegistered = isRegistered;
 
         if (!isRegistered) {
             if (!path.includes('register') && !path.includes('login')) {
@@ -333,59 +323,52 @@ window.load2x2Tree = async function(userAddr) {
     } catch (e) { console.error("Tree Error", e); }
 }
 
-window.load3x3Matrix = async function(pkgId, matrixIndex) {
-    try {
-        const matrix = await contract.getMatrixTree(pkgId, matrixIndex);
-        updateText('m-owner', matrix.ownerAddr.substring(0,6));
-        updateText('slot-a', matrix.slotA === ethers.constants.AddressZero ? "Empty" : matrix.slotA.substring(0,6));
-        updateText('slot-b', matrix.slotB === ethers.constants.AddressZero ? "Empty" : matrix.slotB.substring(0,6));
-        updateText('slot-c', matrix.slotC === ethers.constants.AddressZero ? "Empty" : matrix.slotC.substring(0,6));
-        updateText('fill-info', `Filled: ${matrix.filledCount}/3`);
-    } catch (e) { console.error("Matrix Error", e); }
-}
-
 // --- GLOBAL DATA FETCH ---
 async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
         const data = await activeContract.getUserTotalData(address);
         
-        // 1. User Identity & Wallet
+        // 1. Identity
         updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         
-        // 2. Main Stats
-        updateText('balance-large', format(data.stats[1])); // Bada balance display
+        // 2. Stats
+        updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
 
-        // 3. Incomes (Matching with Dashboard IDs)
+        // 3. Incomes
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
-        updateText('single-leg-earnings', format(data.incomes[2])); // Single Leg
+        updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
 
-        // Booster & Lunar Fund (Abhi logic ke liye Dummy, Contract se aane par format(data.booster) karein)
-        updateText('booster-fund', "0.0000"); 
-        updateText('lunar-fund', "0.0000");
-
-        // 4. Referral Link Update
+        // Referral Link
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // 5. Package Rendering (Live Status)
-        // Yahan hum find karenge ki user ka sabse bada active package kaunsa hai
-        // Demo: Hum maan rahe hain ki agar user ki matrix income hai toh wo active hai
-        // Par sahi tarika hai contract se user ka currentPackageId lena.
-        const userPackageData = await activeContract.users(address);
+        // --- PACKAGE LEVEL DETECTION LOGIC ---
+        // Hum check kar rahe hain ki user ne max kaunsa package buy kiya hai
+        try {
+            const activeStatus = await activeContract.getUserActivePackages(address);
+            let maxActive = -1;
+            for(let i=0; i<12; i++) {
+                if(activeStatus[i]) maxActive = i;
+            }
+            window.userData.currentPackageId = maxActive;
+        } catch (err) {
+            // Fallback: Agar upar wala function nahi hai toh Matrix income se guess karein
+            if (data.incomes[3] > 0) window.userData.currentPackageId = 0;
+        }
+
+        // Trigger Dashboard UI Update
         if (typeof renderPackages === "function") {
-            // Hum ek logic bana rahe hain ki user ne kitne package buy kiye hain
-            // Agar aapke contract mein 'currentPackageId' field hai toh wahi pass karein
-            renderPackages(1); // Yahan contract se aayi value honi chahiye
+            renderPackages(window.userData.currentPackageId);
         }
 
     } catch (e) { console.error("Fetch Data Error:", e); }
@@ -414,9 +397,4 @@ if (window.ethereum) {
     window.ethereum.on('chainChanged', () => location.reload());
 }
 
-
 window.addEventListener('load', init);
-
-
-
-
