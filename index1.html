@@ -7,101 +7,129 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --gold: #ffd700; --bg: #040605; }
+        :root {
+            --gold: #ffd700;
+            --bg-dark: #060a08;
+        }
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: white;
-            background-image: radial-gradient(circle at top right, #1a2e23 0%, #040605 50%);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-dark);
+            color: white; 
+            background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 80%);
         }
         .orbitron { font-family: 'Orbitron', sans-serif; }
-
-        /* Sharp Fixed Gold Border */
-        .gold-card {
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid var(--gold);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Futuristic Package Card */
-        .pkg-card {
-            background: linear-gradient(145deg, #0a0f0c, #000000);
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            border-radius: 24px;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .pkg-card:hover { border-color: var(--gold); transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 215, 0, 0.15); }
         
-        .pkg-active { border: 2px solid #22c55e !important; box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
-
-        /* Status Badge on Top Right */
-        .status-indicator {
-            position: absolute; top: 20px; right: 20px;
-            display: flex; align-items: center; gap: 6px;
-            background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 10px;
+        .gold-border-fixed {
+            background: #000000;
+            border: 1.5px solid var(--gold);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+            border-radius: 20px;
         }
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
-        .dot-green { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
-        .dot-red { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
 
-        .btn-buy {
+        .income-card {
+            background: rgba(0,0,0,0.6);
+            border: 1.5px solid var(--gold);
+            padding: 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-container {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            text-align: right;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+        .dot-active { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .dot-inactive { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+        .btn-action {
             background: linear-gradient(135deg, #ffd700, #b8860b);
-            color: black; font-weight: 900; border-radius: 12px;
-            padding: 12px; width: 100%; transition: 0.3s; text-transform: uppercase;
+            color: black; font-weight: 900; border-radius: 10px;
+            text-transform: uppercase; transition: 0.3s; width: 100%; padding: 10px;
         }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .icon-box { color: var(--gold); }
     </style>
 </head>
 <body class="pb-20">
 
-    <main class="max-w-7xl mx-auto px-4 pt-8">
+    <script src="components.js"></script>
+
+    <main class="max-w-7xl mx-auto px-4 pt-10">
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            <div class="lg:col-span-2 gold-card p-6 flex items-center justify-between flex-wrap gap-4">
+            <div class="lg:col-span-2 gold-border-fixed p-6 flex flex-wrap items-center justify-between gap-6">
                 <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl flex items-center justify-center">
-                        <i data-lucide="user-round-check" class="text-yellow-500 w-8 h-8"></i>
+                    <div class="w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500 flex items-center justify-center">
+                        <i data-lucide="shield-check" class="text-yellow-500 w-8 h-8"></i>
                     </div>
                     <div>
-                        <h2 id="wallet-address-display" class="text-xl font-black orbitron">0x...Not Connected</h2>
+                        <h2 id="wallet-address-display" class="text-xl font-black orbitron text-white">Connecting...</h2>
                         <div class="flex gap-4 mt-1">
-                            <span id="user-id-display" class="text-sm font-bold text-yellow-500 orbitron">USER ID: #----</span>
-                            <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest px-2 border border-green-500/30 rounded">● Online</span>
+                            <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
+                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
                         </div>
                     </div>
                 </div>
-                <div class="text-center bg-white/5 px-6 py-2 rounded-xl border border-white/10">
+                <div class="text-center bg-yellow-500/5 px-6 py-2 rounded-xl border border-yellow-500/30">
                     <p class="text-[9px] text-gray-500 uppercase font-black">Direct Partners</p>
-                    <p id="direct-count" class="text-3xl font-black orbitron text-white">0</p>
+                    <p id="direct-count" class="text-2xl font-black orbitron">0</p>
                 </div>
             </div>
 
-            <div class="gold-card p-6 flex flex-col justify-center">
-                <p class="text-[10px] text-yellow-500 font-black uppercase mb-3 text-center tracking-[0.2em]">Referral Link</p>
-                <div class="flex items-center gap-2 bg-black/50 p-3 rounded-xl border border-yellow-500/20">
-                    <input id="refURL" type="text" readonly value="Connect Wallet First..." class="bg-transparent text-[11px] w-full outline-none text-gray-400 font-mono">
-                    <button onclick="copyLink()" class="text-yellow-500 hover:scale-110 transition"><i data-lucide="copy" class="w-5 h-5"></i></button>
+            <div class="gold-border-fixed p-6 flex flex-col justify-center">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-3 text-center tracking-widest">Your Referral Link</p>
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-yellow-500/30">
+                    <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono">
+                    <button onclick="copyLink()" class="text-yellow-500 hover:scale-110 transition"><i data-lucide="copy" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="users" class="text-yellow-500"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Direct Income</p><p id="direct-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="layers" class="text-yellow-500"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Level Income</p><p id="level-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="grid" class="text-yellow-500"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="zap" class="text-yellow-400"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Booster Fund</p><p id="booster-fund" class="text-xl font-black orbitron text-yellow-400">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="moon" class="text-cyan-400"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Lunar Fund</p><p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="trending-up" class="text-yellow-500"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="globe" class="text-yellow-500"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Daily Income</p><p id="daily-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4"><i data-lucide="award" class="text-yellow-500"></i> <div><p class="text-[10px] text-gray-500 uppercase font-bold">Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="gold-card p-5 flex items-center gap-4 bg-yellow-500/5"><i data-lucide="wallet" class="text-white"></i> <div><p class="text-[10px] text-yellow-500 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
+        <h3 class="orbitron font-black text-xs text-yellow-500 mb-6 tracking-[0.2em] uppercase">Income Statistics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+            <div class="income-card"><i data-lucide="users" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Direct Income</p><p id="direct-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="layers" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Level Income</p><p id="level-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="grid" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            
+            <div class="income-card"><i data-lucide="zap" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p><p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="moon" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p><p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="trending-up" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            
+            <div class="income-card"><i data-lucide="globe" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Daily Income</p><p id="daily-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="award" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Total Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
+        </div>
+
+        <div class="gold-border-fixed p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div class="flex-grow">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-2">Available Balance</p>
+                <div class="flex items-baseline gap-3">
+                    <span id="balance-large" class="text-6xl font-black orbitron">0.00</span>
+                    <span class="text-xl text-gray-500 font-bold">USDT</span>
+                </div>
+            </div>
+            <div class="w-full md:w-80 text-right">
+                <button onclick="handleWithdraw()" class="btn-action !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4">Withdraw Now</button>
+                <p class="text-[10px] font-bold text-gray-500 uppercase">Capping Left: <span id="income-cap" class="text-red-500">0.00 USDT</span></p>
+            </div>
         </div>
 
         <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
-        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             </div>
 
     </main>
@@ -117,69 +145,60 @@
             { id: 9, price: 5152 }, { id: 10, price: 10273 }, { id: 11, price: 20514 }
         ];
 
-        // This function syncs the status and ID live
-        async function syncDashboard() {
-            if (typeof window.ethereum !== 'undefined') {
-                const accounts = await ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    const addr = accounts[0];
-                    document.getElementById('wallet-address-display').innerText = addr.substring(0, 6) + "..." + addr.substring(addr.length - 4);
-                    document.getElementById('refURL').value = `https://rebirthkey.io/join?ref=${addr}`;
-                    
-                    // Note: window.contract and userData will come from your web3-handler.js
-                    try {
-                        const userData = await window.contract.users(addr);
-                        document.getElementById('user-id-display').innerText = `USER ID: #${userData.id}`;
-                        document.getElementById('direct-count').innerText = userData.referralCount;
-                        renderPackages(userData.currentPackageId); // Pass active package from contract
-                    } catch (e) {
-                        renderPackages(-1); // Default if not registered
-                    }
-                }
-            }
-        }
-
-        function renderPackages(activeLevel) {
+        // Is function ko web3-handler.js se call kiya jayega
+        async function renderPackages(activeLevelFromBlockchain = -1) {
             const container = document.getElementById('package-grid');
+            if(!container) return;
+
             container.innerHTML = packageData.map(pkg => {
-                const isActive = pkg.id <= activeLevel;
+                // Blockchain level check
+                const isActive = pkg.id <= activeLevelFromBlockchain; 
+                
                 return `
-                <div class="pkg-card p-8 relative flex flex-col justify-between min-h-[280px] ${isActive ? 'pkg-active' : ''}">
-                    <div class="status-indicator">
-                        <div class="dot ${isActive ? 'dot-green' : 'dot-red'}"></div>
-                        <span class="text-[9px] font-black uppercase ${isActive ? 'text-green-500' : 'text-red-500'}">
+                <div class="gold-border-fixed p-6 flex flex-col justify-between relative min-h-[250px] ${isActive ? 'bg-yellow-500/5' : ''}">
+                    <div class="status-container">
+                        <div class="status-dot ${isActive ? 'dot-active' : 'dot-inactive'}"></div>
+                        <p class="text-[8px] font-black uppercase ${isActive ? 'text-green-500' : 'text-red-500'}">
                             ${isActive ? 'Active' : 'Inactive'}
-                        </span>
+                        </p>
                     </div>
 
                     <div>
-                        <p class="text-[10px] text-gray-500 font-bold orbitron mb-2 tracking-widest">TIER ${pkg.id + 1}</p>
-                        <h4 class="text-5xl font-black orbitron tracking-tighter text-white">$${pkg.price}</h4>
-                        <p class="text-[10px] text-yellow-500/50 mt-2 font-bold uppercase">Matrix Position Secured</p>
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Tier ${pkg.id + 1}</span>
+                        </div>
+                        <h4 class="text-4xl font-black orbitron mb-6">$${pkg.price}</h4>
                     </div>
-
-                    <button onclick="handleBuyPackage(${pkg.id})" 
-                            class="btn-buy mt-8 ${isActive ? 'opacity-30 pointer-events-none' : ''}">
-                        ${isActive ? 'Active Plan' : 'Buy Now'}
-                    </button>
                     
-                    ${isActive ? '<div class="absolute inset-0 bg-green-500/5 pointer-events-none"></div>' : ''}
+                    <button onclick="handleBuyPackage(${pkg.id})" 
+                            class="btn-action" 
+                            ${isActive ? 'disabled' : ''}>
+                        ${isActive ? 'ALREADY OWNED' : 'BUY NOW'}
+                    </button>
                 </div>
-            `;}).join('');
+            `}).join('');
             lucide.createIcons();
         }
 
         function copyLink() {
-            const copyText = document.getElementById("refURL");
-            copyText.select();
-            navigator.clipboard.writeText(copyText.value);
-            alert("Link Copied!");
+            const refInput = document.getElementById('refURL');
+            if (refInput.value.includes("Syncing") || !refInput.value) return;
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+            alert("Referral link copied!");
         }
 
-        // Initial Load
+        // Initial Load (Default view)
         window.addEventListener('load', () => {
             renderPackages(-1);
-            setTimeout(syncDashboard, 1500); // Wait for web3-handler to load
+            
+            // Watch for blockchain sync every 2 seconds
+            setInterval(() => {
+                if (window.userData && window.userData.currentPackageId !== undefined) {
+                    // Agar web3-handler data load kar chuka hai toh update karein
+                    renderPackages(window.userData.currentPackageId);
+                }
+            }, 2000);
         });
     </script>
 </body>
