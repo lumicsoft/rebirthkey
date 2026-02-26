@@ -1,183 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | RebirthKey</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style1.css">
-    <style>
-        .withdraw-btn { background: linear-gradient(135deg, #00f2ff, #0066ff) !important; color: white !important; }
-        .package-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); transition: 0.3s; }
-        .package-card:hover { border-color: #eab308; background: rgba(234, 179, 8, 0.05); }
-        .usdt-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 4px; filter: drop-shadow(0 0 5px rgba(38, 161, 123, 0.4)); }
-        .stat-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | RebirthKey USDT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #050505; color: white; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        /* Dashboard Cards & Borders */
+        .premium-border { 
+            background: rgba(255, 255, 255, 0.02); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .package-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .package-card:hover { 
+            border-color: #eab308; 
+            background: rgba(234, 179, 8, 0.05); 
+            transform: translateY(-5px);
+        }
+
+        /* Buttons */
+        .gold-btn {
+            background: linear-gradient(to right, #eab308, #facc15);
+            color: black;
+            font-weight: 800;
+            padding: 12px 24px;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+        
+        .withdraw-btn { 
+            background: linear-gradient(135deg, #eab308, #b45309) !important; 
+            color: black !important; 
+            box-shadow: 0 10px 20px rgba(234, 179, 8, 0.2);
+        }
+
+        .usdt-icon { width: 20px; height: 20px; filter: drop-shadow(0 0 5px rgba(38, 161, 123, 0.4)); }
+        .stat-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
+        
+        /* Animation */
+        .glow-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
 </head>
-<body class="bg-[#050505] text-white"> 
+<body class="bg-[#050505]"> 
 
-    <main class="max-w-7xl mx-auto px-6 relative z-10 pt-10">
-        
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Account ID</p>
-                <h3 id="user-id-display" class="text-xl stat-value text-yellow-500">...</h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Withdrawable</p>
-                <h3 class="text-xl stat-value text-green-400 flex items-center justify-center">
-                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="usdt-icon">
-                    <span id="withdrawable-display">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-4 text-center">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Earned</p>
-                <h3 class="text-xl stat-value text-emerald-400 flex items-center justify-center">
-                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="usdt-icon">
-                    <span id="total-earned">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-4 text-center border-red-500/20 bg-red-500/5">
-                <p class="text-[9px] font-bold text-red-400 uppercase tracking-widest mb-1">Income Cap Left</p>
-                <h3 id="income-cap" class="text-xl stat-value text-red-500">0.00</h3>
-            </div>
-        </div>
+    <script src="components.js"></script>
 
-        <div class="premium-border p-6 mb-8">
-            <p class="text-[10px] font-black orbitron text-yellow-500 uppercase mb-3">Your Referral Link</p>
-            <div class="flex items-center gap-3 bg-black/40 p-2 pl-4 rounded-xl border border-white/10">
-                <input id="refURL" type="text" readonly value="Connecting to blockchain..." class="bg-transparent border-none outline-none w-full text-xs text-gray-300 font-mono">
-                <button onclick="copyLink()" class="gold-btn !py-2 !px-6">COPY</button>
-            </div>
-        </div>
+    <main class="max-w-7xl mx-auto px-6 pt-12 pb-20">
+        
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="premium-border p-6 text-center">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Account ID</p>
+                <h3 id="user-id-display" class="text-2xl stat-value text-yellow-500">...</h3>
+            </div>
+            <div class="premium-border p-6 text-center">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Withdrawable</p>
+                <h3 class="text-2xl stat-value text-green-400 flex items-center justify-center gap-2">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="usdt-icon">
+                    <span id="withdrawable-display">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-6 text-center">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Earned</p>
+                <h3 class="text-2xl stat-value text-emerald-400 flex items-center justify-center gap-2">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="usdt-icon">
+                    <span id="total-earned">0.00</span>
+                </h3>
+            </div>
+            <div class="premium-border p-6 text-center bg-red-500/5 border-red-500/20">
+                <p class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-2">Income Cap Left</p>
+                <h3 id="income-cap" class="text-2xl stat-value text-red-500">0.00</h3>
+            </div>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-            <div class="package-card p-4 rounded-2xl text-center border-white/5">
-                <p class="text-[8px] text-gray-500 uppercase mb-1">Direct</p>
-                <p id="direct-earnings" class="text-sm font-bold orbitron">0.00</p>
-            </div>
-            <div class="package-card p-4 rounded-2xl text-center border-white/5">
-                <p class="text-[8px] text-gray-500 uppercase mb-1">Level</p>
-                <p id="level-earnings" class="text-sm font-bold orbitron">0.00</p>
-            </div>
-            <div class="package-card p-4 rounded-2xl text-center border-white/5">
-                <p class="text-[8px] text-gray-500 uppercase mb-1">Single Leg</p>
-                <p id="single-leg-earnings" class="text-sm font-bold orbitron">0.00</p>
-            </div>
-            <div class="package-card p-4 rounded-2xl text-center border-white/5">
-                <p class="text-[8px] text-gray-500 uppercase mb-1">Matrix</p>
-                <p id="matrix-earnings" class="text-sm font-bold orbitron">0.00</p>
-            </div>
-            <div class="package-card p-4 rounded-2xl text-center border-white/5">
-                <p class="text-[8px] text-gray-500 uppercase mb-1">Daily Global</p>
-                <p id="daily-earnings" class="text-sm font-bold orbitron">0.00</p>
-            </div>
-            <div class="package-card p-4 rounded-2xl text-center border-white/5">
-                <p class="text-[8px] text-gray-500 uppercase mb-1">Rewards</p>
-                <p id="reward-earnings" class="text-sm font-bold orbitron">0.00</p>
-            </div>
-        </div>
+        <div class="premium-border p-8 mb-10">
+            <p class="text-[11px] font-black orbitron text-yellow-500 uppercase mb-4 tracking-widest">Your Referral Link</p>
+            <div class="flex flex-col md:flex-row items-center gap-4 bg-black/40 p-3 rounded-2xl border border-white/5">
+                <input id="refURL" type="text" readonly value="Connecting to blockchain..." class="bg-transparent border-none outline-none w-full text-sm text-gray-300 font-mono px-4">
+                <button onclick="copyLink()" id="copy-btn" class="gold-btn w-full md:w-auto uppercase tracking-tighter">COPY LINK</button>
+            </div>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="premium-border p-8 text-center bg-blue-950/10 border-blue-500/20">
-                <div class="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="wallet-cards" class="w-8 h-8 text-blue-400"></i>
-                </div>
-                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Available for Withdrawal</h4>
-                <h2 class="text-5xl font-black orbitron mb-8 flex items-center justify-center gap-3">
-                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" style="width:35px">
-                    <span id="balance-large">0.00</span>
-                </h2>
-                <button onclick="handleWithdraw()" class="gold-btn withdraw-btn w-full !py-5 orbitron font-black tracking-widest text-lg">
-                    PROCESS WITHDRAWAL <i data-lucide="arrow-right-circle" class="w-5 h-5 inline-block ml-1"></i>
-                </button>
-                <p class="text-[10px] text-gray-500 mt-4 italic font-bold">Withdrawals are sent directly to your USDT wallet</p>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+            <div class="package-card p-5 text-center">
+                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Direct</p>
+                <p id="direct-earnings" class="text-lg font-black orbitron">0.00</p>
+            </div>
+            <div class="package-card p-5 text-center">
+                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Level</p>
+                <p id="level-earnings" class="text-lg font-black orbitron">0.00</p>
+            </div>
+            <div class="package-card p-5 text-center">
+                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Single Leg</p>
+                <p id="single-leg-earnings" class="text-lg font-black orbitron">0.00</p>
+            </div>
+            <div class="package-card p-5 text-center">
+                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Matrix</p>
+                <p id="matrix-earnings" class="text-lg font-black orbitron">0.00</p>
+            </div>
+            <div class="package-card p-5 text-center">
+                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Daily Global</p>
+                <p id="daily-earnings" class="text-lg font-black orbitron">0.00</p>
+            </div>
+            <div class="package-card p-5 text-center">
+                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Rewards</p>
+                <p id="reward-earnings" class="text-lg font-black orbitron">0.00</p>
+            </div>
+        </div>
 
-            <div class="premium-border p-8 bg-black/40">
-                <div class="flex items-center gap-2 mb-8">
-                    <i data-lucide="users" class="w-5 h-5 text-yellow-500"></i>
-                    <h3 class="text-sm font-black orbitron text-yellow-500 uppercase">Network Statistics</h3>
-                </div>
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                        <div class="flex flex-col">
-                            <span class="text-white text-sm font-bold uppercase orbitron">Direct Partners</span>
-                            <span class="text-[10px] text-gray-500">Your direct active referrals</span>
-                        </div>
-                        <span id="direct-count" class="font-black orbitron text-2xl text-white">0</span>
-                    </div>
-                    <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                        <div class="flex flex-col">
-                            <span class="text-white text-sm font-bold uppercase orbitron">Capping Loss</span>
-                            <span class="text-[10px] text-gray-500">Income lost due to limit</span>
-                        </div>
-                        <span id="capping-loss" class="font-black orbitron text-xl text-red-500">0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center pt-2">
-                        <span class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Global Status</span>
-                        <span id="status-badge" class="px-4 py-1.5 rounded-full bg-green-500/10 text-green-500 text-[10px] font-black border border-green-500/30 uppercase flex items-center gap-2">
-                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> SYSTEM ACTIVE
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="premium-border p-10 text-center bg-yellow-500/5 border-yellow-500/10">
+                <div class="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="wallet" class="w-10 h-10 text-yellow-500"></i>
+                </div>
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Available Balance</h4>
+                <h2 class="text-6xl font-black orbitron mb-10 flex items-center justify-center gap-4">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" style="width:40px">
+                    <span id="balance-large">0.00</span>
+                </h2>
+                <button onclick="handleWithdraw()" class="gold-btn withdraw-btn w-full !py-6 orbitron font-black tracking-[0.2em] text-xl transform hover:scale-[1.02]">
+                    PROCESS WITHDRAWAL
+                </button>
+            </div>
 
-        <div class="premium-border p-6 mb-12">
-            <h3 class="text-sm font-black orbitron mb-6 flex items-center gap-2">
-                <i data-lucide="package" class="w-4 h-4 text-yellow-500"></i>
-                ENTRY <span class="text-yellow-500">PACKAGES</span>
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="package-card p-4 rounded-xl border-l-4 border-l-yellow-500">
-                    <div class="flex justify-between items-start">
-                        <p class="text-[10px] text-gray-400 uppercase font-black">Starter</p>
-                        <span class="text-[9px] bg-yellow-500/10 text-yellow-500 px-2 rounded">Active</span>
-                    </div>
-                    <p class="text-xl font-black orbitron mt-1">10 USDT</p>
-                </div>
-                <div class="package-card p-4 rounded-xl">
-                    <p class="text-[10px] text-gray-400 uppercase font-black">Executive</p>
-                    <p class="text-xl font-black orbitron mt-1">25 USDT</p>
-                </div>
-                <div class="package-card p-4 rounded-xl">
-                    <p class="text-[10px] text-gray-400 uppercase font-black">Premium</p>
-                    <p class="text-xl font-black orbitron mt-1">50 USDT</p>
-                </div>
-            </div>
-        </div>
+            <div class="premium-border p-10">
+                <div class="flex items-center gap-3 mb-10">
+                    <i data-lucide="activity" class="w-6 h-6 text-yellow-500"></i>
+                    <h3 class="text-lg font-black orbitron text-yellow-500 uppercase tracking-tighter">Network Live Data</h3>
+                </div>
+                <div class="space-y-8">
+                    <div class="flex justify-between items-center border-b border-white/5 pb-6">
+                        <div>
+                            <span class="text-white text-md font-bold orbitron">DIRECT PARTNERS</span>
+                            <p class="text-[10px] text-gray-500 mt-1 uppercase">Active referrals</p>
+                        </div>
+                        <span id="direct-count" class="font-black orbitron text-3xl text-white">0</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-white/5 pb-6">
+                        <div>
+                            <span class="text-white text-md font-bold orbitron">CAPPING LOSS</span>
+                            <p class="text-[10px] text-gray-500 mt-1 uppercase">Exceeded income limit</p>
+                        </div>
+                        <span id="capping-loss" class="font-black orbitron text-2xl text-red-500">0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Status</span>
+                        <span class="px-5 py-2 rounded-full bg-green-500/10 text-green-500 text-[10px] font-black border border-green-500/20 uppercase flex items-center gap-3">
+                            <div class="glow-dot"></div> SYSTEM ONLINE
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    </main>
+        <div class="premium-border p-8">
+            <h3 class="text-md font-black orbitron mb-8 flex items-center gap-3">
+                <i data-lucide="layers" class="w-5 h-5 text-yellow-500"></i>
+                YOUR <span class="text-yellow-500">LEVELS</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="package-card p-6 border-l-4 border-l-yellow-500">
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="text-[10px] text-gray-400 font-black uppercase">Starter</p>
+                        <span class="text-[9px] bg-yellow-500 text-black font-bold px-2 py-1 rounded">ACTIVE</span>
+                    </div>
+                    <p class="text-2xl font-black orbitron">10 USDT</p>
+                </div>
+                </div>
+        </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script src="components.js"></script>
-    <script src="web3-handler.js"></script>
-    <script>
-        // Copy function localized to this page
-        function copyLink() {
-            const refInput = document.getElementById('refURL');
-            if (refInput.value.includes("Connecting") || refInput.value.includes("Connect")) {
-                alert("Please connect your wallet first!");
-                return;
-            }
-            refInput.select();
-            navigator.clipboard.writeText(refInput.value);
-            
-            // UI Feedback
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "COPIED!";
-            btn.style.background = "#22c55e";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "";
-            }, 2000);
-        }
-    </script>
+    </main>
+
+    <script src="web3-handler.js"></script>
+    <script>
+        lucide.createIcons();
+
+        function copyLink() {
+            const refInput = document.getElementById('refURL');
+            if (refInput.value.includes("Connecting")) {
+                alert("Please wait for blockchain sync...");
+                return;
+            }
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+            
+            const btn = document.getElementById('copy-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "COPIED!";
+            btn.style.background = "#22c55e";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = "";
+            }, 2000);
+        }
+
+        // Sync large balance with small balance
+        setInterval(() => {
+            const smallBal = document.getElementById('withdrawable-display').innerText;
+            const largeBal = document.getElementById('balance-large');
+            if(largeBal) largeBal.innerText = smallBal;
+        }, 1000);
+    </script>
 </body>
 </html>
-
-isme pacjahge purchage ka page nahi h kya
