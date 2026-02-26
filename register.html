@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | RebirthKey USDT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style1.css"> 
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #050505; color: white; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); }
+        .text-gradient { background: linear-gradient(to right, #eab308, #facc15); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .input-field { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 12px; width: 100%; color: white; outline: none; transition: 0.3s; font-family: monospace; }
+        .input-field:focus { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.15); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <script src="components.js"></script>
+
+    <main class="flex-grow flex items-center justify-center px-6 py-20 relative overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow-500/5 rounded-full blur-[120px] -z-10"></div>
+
+        <div class="glass-card w-full max-w-md p-10 rounded-[40px] relative border-t border-white/10 text-center">
+            
+            <div class="mb-8">
+                <h1 class="text-3xl font-black orbitron uppercase tracking-tighter mb-2">Secure <span class="text-gradient">Join</span></h1>
+                <p class="text-gray-500 text-[10px] tracking-[0.3em] uppercase font-bold">Direct Blockchain Registration</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Your Connected Wallet</span>
+                        <span id="status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    </div>
+                    <div id="user-wallet-address" class="text-[11px] font-mono text-gray-300 break-all bg-black/30 p-2 rounded-lg border border-white/5">
+                        Please connect wallet...
+                    </div>
+                </div>
+
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Referrer ID / Address</label>
+                    <input type="text" id="reg-referrer" placeholder="Enter Referrer ID" class="input-field">
+                    <p id="ref-status" class="text-[9px] mt-2 text-green-500 hidden italic font-bold uppercase">✓ Referral ID Locked</p>
+                </div>
+
+                <button onclick="handleAuthAction()" id="action-btn" class="w-full py-5 orbitron font-black tracking-[0.2em] bg-yellow-500 text-black rounded-2xl hover:bg-yellow-400 transition-all shadow-[0_10px_30px_rgba(234,179,8,0.2)]">
+                    CONNECT WALLET
+                </button>
+
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold pt-4">
+                    Already Registered? <a href="#" onclick="initiateLogin()" class="text-yellow-500 hover:underline">Click to Login</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script src="web3-handler.js"></script>
+
+    <script>
+        lucide.createIcons();
+
+        // 1. Check Wallet Connection & Update UI
+        function updateUI() {
+            const btn = document.getElementById('action-btn');
+            const addressDisplay = document.getElementById('user-wallet-address');
+            const dot = document.getElementById('status-dot');
+
+            if (window.userAddress) {
+                addressDisplay.innerText = window.userAddress;
+                addressDisplay.classList.add('text-yellow-500');
+                dot.classList.remove('bg-red-500');
+                dot.classList.add('bg-green-500');
+                btn.innerText = "REGISTER ON BLOCKCHAIN";
+            } else {
+                btn.innerText = "CONNECT WALLET";
+            }
+        }
+
+        // Run UI update every second to detect Metamask changes
+        setInterval(updateUI, 1000);
+
+        // 2. Handle Button Click
+        async function handleAuthAction() {
+            if (!window.userAddress) {
+                if (typeof init === 'function') await init();
+            } else {
+                const referrer = document.getElementById('reg-referrer').value;
+                if (!referrer) {
+                    alert("Please enter a Referrer ID to proceed.");
+                    return;
+                }
+                // Call the registration function in web3-handler.js
+                if (typeof handleRegister === 'function') {
+                    await handleRegister();
+                }
+            }
+        }
+
+        async function initiateLogin() {
+            if (typeof handleLogin === 'function') {
+                await handleLogin();
+            } else {
+                if (typeof init === 'function') await init();
+            }
+        }
+
+        // 3. Referral Auto-fill
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                const el = document.getElementById('reg-referrer');
+                el.value = ref; 
+                el.readOnly = true; 
+                el.style.opacity = "0.6";
+                document.getElementById('ref-status').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
