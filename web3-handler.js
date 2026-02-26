@@ -1,6 +1,6 @@
 let provider, signer, contract, usdtContract;
-const CONTRACT_ADDRESS = "0x7f4b3f6e015e96a5394f502c89fea2880b901aa5"; 
-const USDT_ADDRESS = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"; // Testnet USDT
+const CONTRACT_ADDRESS = "0x453F54E96667D07BaB8d7540Ed1a06aC2691141F"; 
+const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
 // --- NEW ABI FOR REBIRTHKEY CONTRACT ---
 const CONTRACT_ABI = [
@@ -333,5 +333,6 @@ if (window.ethereum) {
     });
     window.ethereum.on('chainChanged', () => location.reload());
 }
+
 
 window.addEventListener('load', init);
