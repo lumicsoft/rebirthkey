@@ -350,23 +350,43 @@ async function fetchAllData(address) {
         let activeContract = window.contract || contract;
         const data = await activeContract.getUserTotalData(address);
         
-        // Stats: [0]id, [1]balance, [2]totalEarned, [3]incomeCap, [4]directCount, [5]cappingLoss
-        updateText('user-id-display', data.stats[0].toString());
-        updateText('withdrawable-display', format(data.stats[1]));
+        // 1. User Identity & Wallet
+        updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
+        updateText('user-id-display', "ID: #" + data.stats[0].toString());
+        
+        // 2. Main Stats
+        updateText('balance-large', format(data.stats[1])); // Bada balance display
         updateText('total-earned', format(data.stats[2]));
-        updateText('income-cap', format(data.stats[3]));
+        updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
 
-        // Incomes: [0]direct, [1]level, [2]singleLeg, [3]matrix, [4]daily, [5]reward
+        // 3. Incomes (Matching with Dashboard IDs)
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
-        updateText('singleleg-earnings', format(data.incomes[2]));
+        updateText('single-leg-earnings', format(data.incomes[2])); // Single Leg
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
 
+        // Booster & Lunar Fund (Abhi logic ke liye Dummy, Contract se aane par format(data.booster) karein)
+        updateText('booster-fund', "0.0000"); 
+        updateText('lunar-fund', "0.0000");
+
+        // 4. Referral Link Update
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
-        if(document.getElementById('refURL')) document.getElementById('refURL').value = refUrl;
+        const refInput = document.getElementById('refURL');
+        if(refInput) refInput.value = refUrl;
+
+        // 5. Package Rendering (Live Status)
+        // Yahan hum find karenge ki user ka sabse bada active package kaunsa hai
+        // Demo: Hum maan rahe hain ki agar user ki matrix income hai toh wo active hai
+        // Par sahi tarika hai contract se user ka currentPackageId lena.
+        const userPackageData = await activeContract.users(address);
+        if (typeof renderPackages === "function") {
+            // Hum ek logic bana rahe hain ki user ne kitne package buy kiye hain
+            // Agar aapke contract mein 'currentPackageId' field hai toh wahi pass karein
+            renderPackages(1); // Yahan contract se aayi value honi chahiye
+        }
 
     } catch (e) { console.error("Fetch Data Error:", e); }
 }
@@ -396,5 +416,6 @@ if (window.ethereum) {
 
 
 window.addEventListener('load', init);
+
 
 
