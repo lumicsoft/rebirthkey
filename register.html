@@ -114,30 +114,45 @@
         });
 
         // Bridge to web3-handler.js
-        async function initiateRegister() {
-            const btn = document.getElementById('reg-btn');
-            const refAddr = document.getElementById('reg-referrer').value.trim();
+        // Updated Bridge Function
+async function initiateRegister() {
+    const btn = document.getElementById('reg-btn');
+    const refAddr = document.getElementById('reg-referrer').value.trim();
 
-            if (!ethers.utils.isAddress(refAddr)) {
-                alert("Please enter a valid BSC Wallet Address (0x...)");
-                return;
-            }
+    // 1. Check Address Format
+    if (!ethers.utils.isAddress(refAddr)) {
+        alert("Please enter a valid BSC Wallet Address (0x...)");
+        return;
+    }
 
-            try {
-                if (window.handleRegister) {
-                    btn.disabled = true;
-                    btn.innerText = "WAITING FOR WALLET...";
-                    await window.handleRegister();
-                } else {
-                    alert("System initializing. Please try again in 2 seconds.");
-                }
-            } catch (err) {
-                console.error(err);
-                btn.disabled = false;
-                btn.innerText = "REGISTER NOW";
-            }
+    try {
+        // 2. Agar wallet connect nahi hai, toh pehle connect karwao
+        if (!window.ethereum) {
+            alert("MetaMask/TrustWallet not detected!");
+            return;
         }
 
+        btn.disabled = true;
+        btn.innerText = "CONNECTING...";
+
+        // Accounts request karein
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        window.userAddress = accounts[0]; // Global variable set karein
+
+        if (window.handleRegister) {
+            btn.innerText = "WAITING FOR WALLET...";
+            await window.handleRegister();
+        } else {
+            alert("Web3 Handler missing. Please refresh.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Action Cancelled or Error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "REGISTER NOW";
+    }
+}
         async function initiateLogin() {
             if (window.handleLogin) {
                 await window.handleLogin();
@@ -148,3 +163,4 @@
     </script>
 </body>
 </html>
+
