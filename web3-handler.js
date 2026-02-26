@@ -203,6 +203,7 @@ function showLogoutIcon(address) {
 }
 
 // --- APP SETUP ---
+// --- APP SETUP ---
 async function setupApp(address) {
     try {
         const network = await provider.getNetwork();
@@ -246,13 +247,13 @@ async function setupApp(address) {
             await fetchAllData(address);
         }
 
-        // --- NEW: TEAM PAGE PATH ---
-        if (path.includes('team')) {
-            // Agar team.html par initTeamPage() function hai toh usey trigger karega
+        // --- UPDATED: DEPOSITS PAGE PATH ---
+        if (path.includes('deposits')) {
+            // Agar deposits.html par initTeamPage() ya koi specific initialization hai
             if (typeof initTeamPage === "function") {
                 await initTeamPage();
             } else {
-                // Fallback: Agar function nahi mil raha toh seedha basics load karega
+                // Fallback: Data load karega aur agar tree function available hai to trigger karega
                 await fetchAllData(address); 
                 if(window.loadTree) window.loadTree(address);
             }
@@ -267,7 +268,6 @@ async function setupApp(address) {
         console.error("SetupApp Error:", e);
     }
 }
-
 // --- HISTORY LOGIC ---
 window.showHistory = async function(type) {
     const container = document.getElementById('history-container');
@@ -414,4 +414,5 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
