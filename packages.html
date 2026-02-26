@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Packages | RebirthKey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style1.css">
+    <style>
+        .pkg-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); transition: 0.4s; position: relative; overflow: hidden; }
+        .pkg-card:hover { transform: translateY(-10px); border-color: #eab308; background: rgba(234, 179, 8, 0.05); }
+        .pkg-card.active-pkg { border-color: #22c55e; background: rgba(34, 197, 94, 0.05); }
+        .glow-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+        .buy-btn { background: linear-gradient(135deg, #eab308, #ca8a04); color: black; font-weight: 900; transition: 0.3s; }
+        .buy-btn:hover { box-shadow: 0 0 20px rgba(234, 179, 8, 0.4); transform: scale(1.02); }
+    </style>
+</head>
+<body class="bg-[#050505] text-white">
+
+    <main class="max-w-7xl mx-auto px-6 pt-16 pb-20">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-black orbitron mb-4 glow-text uppercase">Select Your <span class="text-yellow-500">Package</span></h2>
+            <p class="text-gray-400 font-bold tracking-widest text-xs uppercase">Maximize your earnings with high-tier matrix entries</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <div class="pkg-card p-8 rounded-[32px] flex flex-col items-center">
+                <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6">
+                    <i data-lucide="zap" class="text-yellow-500 w-8 h-8"></i>
+                </div>
+                <h3 class="orbitron font-black text-xl mb-2">STARTER</h3>
+                <div class="flex items-center gap-2 mb-6">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="w-6 h-6">
+                    <span class="text-3xl font-black orbitron">10</span>
+                </div>
+                <ul class="text-xs text-gray-400 space-y-3 mb-8 text-center font-bold uppercase tracking-tighter">
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> Direct Income: 10%</li>
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> Matrix Entry Level 1</li>
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> 200% Income Cap</li>
+                </ul>
+                <button onclick="purchasePackage(10)" class="buy-btn w-full py-4 rounded-2xl orbitron tracking-widest uppercase">Buy Now</button>
+            </div>
+
+            <div class="pkg-card p-8 rounded-[32px] flex flex-col items-center border-yellow-500/30 bg-yellow-500/5">
+                <div class="absolute top-4 right-6 bg-yellow-500 text-black text-[8px] font-black px-3 py-1 rounded-full orbitron">POPULAR</div>
+                <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6">
+                    <i data-lucide="shield-check" class="text-yellow-500 w-8 h-8"></i>
+                </div>
+                <h3 class="orbitron font-black text-xl mb-2">EXECUTIVE</h3>
+                <div class="flex items-center gap-2 mb-6">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="w-6 h-6">
+                    <span class="text-3xl font-black orbitron">25</span>
+                </div>
+                <ul class="text-xs text-gray-400 space-y-3 mb-8 text-center font-bold uppercase tracking-tighter">
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> Direct Income: 10%</li>
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> Matrix Entry Level 2</li>
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> 250% Income Cap</li>
+                </ul>
+                <button onclick="purchasePackage(25)" class="buy-btn w-full py-4 rounded-2xl orbitron tracking-widest uppercase shadow-lg shadow-yellow-500/20">Buy Now</button>
+            </div>
+
+            <div class="pkg-card p-8 rounded-[32px] flex flex-col items-center">
+                <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6">
+                    <i data-lucide="gem" class="text-yellow-500 w-8 h-8"></i>
+                </div>
+                <h3 class="orbitron font-black text-xl mb-2">PREMIUM</h3>
+                <div class="flex items-center gap-2 mb-6">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="w-6 h-6">
+                    <span class="text-3xl font-black orbitron">50</span>
+                </div>
+                <ul class="text-xs text-gray-400 space-y-3 mb-8 text-center font-bold uppercase tracking-tighter">
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> Direct Income: 10%</li>
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> Matrix Entry Level 3</li>
+                    <li><i data-lucide="check" class="w-3 h-3 inline mr-1 text-green-500"></i> 300% Income Cap</li>
+                </ul>
+                <button onclick="purchasePackage(50)" class="buy-btn w-full py-4 rounded-2xl orbitron tracking-widest uppercase">Buy Now</button>
+            </div>
+
+        </div>
+
+        <div class="mt-16 premium-border p-6 bg-blue-500/5 border-blue-500/20 flex flex-col md:flex-row items-center gap-6">
+            <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h4 class="orbitron font-black text-sm text-blue-400 mb-1">IMPORTANT NOTE</h4>
+                <p class="text-xs text-gray-500 font-bold uppercase">Before purchasing, ensure you have sufficient USDT and some BNB for gas fees in your wallet. You will need to approve USDT first if it's your first time.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="components.js"></script>
+    <script src="web3-handler.js"></script>
+    <script>
+        lucide.createIcons();
+
+        async function purchasePackage(amount) {
+            try {
+                // Ye function web3-handler.js mein hona chahiye jo USDT approve kare aur buy kare
+                if (typeof handleBuyPackage === "function") {
+                    await handleBuyPackage(amount);
+                } else {
+                    alert("System is connecting... please wait or check web3-handler.js");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>
