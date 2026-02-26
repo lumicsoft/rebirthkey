@@ -3,219 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | RebirthKey USDT</title>
+    <title>Dashboard | RebirthKey Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #050505; color: white; }
+        :root {
+            --gold: #ffd700;
+            --bg-light: #0f1712; /* Light Dark Background */
+            --card-dark: #050a07; /* Deep Dark Sections */
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: radial-gradient(circle at top right, #1a2e23, #0f1712 50%);
+            color: white; 
+            min-height: 100vh;
+        }
         .orbitron { font-family: 'Orbitron', sans-serif; }
         
-        /* Dashboard Cards & Borders */
-        .premium-border { 
-            background: rgba(255, 255, 255, 0.02); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 24px;
-            backdrop-filter: blur(10px);
+        /* Modern Section Boxes */
+        .section-box {
+            background: var(--card-dark);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            border-radius: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
-        
-        .package-card { 
-            background: rgba(255, 255, 255, 0.03); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
+
+        /* Package Card Design */
+        .pkg-card {
+            background: linear-gradient(145deg, #0a110d, #050a07);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 20px;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .package-card:hover { 
-            border-color: #eab308; 
-            background: rgba(234, 179, 8, 0.05); 
-            transform: translateY(-5px);
-        }
+        .pkg-card.active { border-color: var(--gold); background: rgba(255, 215, 0, 0.03); }
+        .pkg-card:hover { transform: translateY(-8px); border-color: var(--gold); }
 
         /* Buttons */
-        .gold-btn {
-            background: linear-gradient(to right, #eab308, #facc15);
-            color: black;
-            font-weight: 800;
-            padding: 12px 24px;
-            border-radius: 12px;
-            transition: 0.3s;
+        .btn-gold {
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            color: black; font-weight: 800; border-radius: 12px;
+            transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
         }
-        
-        .withdraw-btn { 
-            background: linear-gradient(135deg, #eab308, #b45309) !important; 
-            color: black !important; 
-            box-shadow: 0 10px 20px rgba(234, 179, 8, 0.2);
-        }
+        .btn-gold:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+        .btn-gold:disabled { background: #333; color: #777; transform: none; box-shadow: none; }
 
-        .usdt-icon { width: 20px; height: 20px; filter: drop-shadow(0 0 5px rgba(38, 161, 123, 0.4)); }
-        .stat-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
-        
-        /* Animation */
-        .glow-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .usdt-glow { filter: drop-shadow(0 0 8px rgba(38, 161, 123, 0.5)); }
     </style>
 </head>
-<body class="bg-[#050505]"> 
+<body>
 
     <script src="components.js"></script>
 
-    <main class="max-w-7xl mx-auto px-6 pt-12 pb-20">
+    <main class="max-w-7xl mx-auto px-4 py-10">
         
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <div class="premium-border p-6 text-center">
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Account ID</p>
-                <h3 id="user-id-display" class="text-2xl stat-value text-yellow-500">...</h3>
-            </div>
-            <div class="premium-border p-6 text-center">
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Withdrawable</p>
-                <h3 class="text-2xl stat-value text-green-400 flex items-center justify-center gap-2">
-                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="usdt-icon">
-                    <span id="withdrawable-display">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-6 text-center">
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Earned</p>
-                <h3 class="text-2xl stat-value text-emerald-400 flex items-center justify-center gap-2">
-                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="usdt-icon">
-                    <span id="total-earned">0.00</span>
-                </h3>
-            </div>
-            <div class="premium-border p-6 text-center bg-red-500/5 border-red-500/20">
-                <p class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-2">Income Cap Left</p>
-                <h3 id="income-cap" class="text-2xl stat-value text-red-500">0.00</h3>
-            </div>
-        </div>
-
-        <div class="premium-border p-8 mb-10">
-            <p class="text-[11px] font-black orbitron text-yellow-500 uppercase mb-4 tracking-widest">Your Referral Link</p>
-            <div class="flex flex-col md:flex-row items-center gap-4 bg-black/40 p-3 rounded-2xl border border-white/5">
-                <input id="refURL" type="text" readonly value="Connecting to blockchain..." class="bg-transparent border-none outline-none w-full text-sm text-gray-300 font-mono px-4">
-                <button onclick="copyLink()" id="copy-btn" class="gold-btn w-full md:w-auto uppercase tracking-tighter">COPY LINK</button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
-            <div class="package-card p-5 text-center">
-                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Direct</p>
-                <p id="direct-earnings" class="text-lg font-black orbitron">0.00</p>
-            </div>
-            <div class="package-card p-5 text-center">
-                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Level</p>
-                <p id="level-earnings" class="text-lg font-black orbitron">0.00</p>
-            </div>
-            <div class="package-card p-5 text-center">
-                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Single Leg</p>
-                <p id="single-leg-earnings" class="text-lg font-black orbitron">0.00</p>
-            </div>
-            <div class="package-card p-5 text-center">
-                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Matrix</p>
-                <p id="matrix-earnings" class="text-lg font-black orbitron">0.00</p>
-            </div>
-            <div class="package-card p-5 text-center">
-                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Daily Global</p>
-                <p id="daily-earnings" class="text-lg font-black orbitron">0.00</p>
-            </div>
-            <div class="package-card p-5 text-center">
-                <p class="text-[9px] text-gray-500 uppercase mb-2 font-bold tracking-wider">Rewards</p>
-                <p id="reward-earnings" class="text-lg font-black orbitron">0.00</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            <div class="premium-border p-10 text-center bg-yellow-500/5 border-yellow-500/10">
-                <div class="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="wallet" class="w-10 h-10 text-yellow-500"></i>
+        <div class="section-box p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-yellow-500/10 rounded-2xl flex items-center justify-center border border-yellow-500/20">
+                    <i data-lucide="user" class="text-yellow-500 w-8 h-8"></i>
                 </div>
-                <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Available Balance</h4>
-                <h2 class="text-6xl font-black orbitron mb-10 flex items-center justify-center gap-4">
-                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" style="width:40px">
+                <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Active Wallet</p>
+                    <h2 id="wallet-address-display" class="text-lg font-bold text-white orbitron">0x...</h2>
+                    <div class="flex gap-4 mt-1">
+                        <span class="text-[10px] text-green-400 font-bold uppercase flex items-center gap-1">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Verified Member
+                        </span>
+                        <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Joined: Loading...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <div class="text-right border-r border-white/5 pr-6">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Account ID</p>
+                    <p id="user-id-display" class="text-xl font-black text-yellow-500 orbitron">0</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Balance</p>
+                    <p class="text-xl font-black text-white orbitron flex items-center gap-2">
+                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="w-4 h-4 usdt-glow">
+                        <span id="withdrawable-display">0.00</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            
+            <div class="lg:col-span-2 section-box p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="orbitron font-black text-yellow-500 uppercase italic">Earnings Overview</h3>
+                    <i data-lucide="trending-up" class="text-gray-600"></i>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Direct</p>
+                        <p id="direct-earnings" class="text-xl font-black orbitron text-white">0.00</p>
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Level</p>
+                        <p id="level-earnings" class="text-xl font-black orbitron text-white">0.00</p>
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Single Leg</p>
+                        <p id="single-leg-earnings" class="text-xl font-black orbitron text-white">0.00</p>
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Matrix</p>
+                        <p id="matrix-earnings" class="text-xl font-black orbitron text-white">0.00</p>
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Daily Global</p>
+                        <p id="daily-earnings" class="text-xl font-black orbitron text-white">0.00</p>
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold mb-1">Total Rewards</p>
+                        <p id="reward-earnings" class="text-xl font-black orbitron text-yellow-500">0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-box p-8 bg-gradient-to-br from-[#050a07] to-[#0a1f14]">
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Ready to Payout</p>
+                <h2 class="text-5xl font-black orbitron mb-6 flex items-center gap-3">
                     <span id="balance-large">0.00</span>
                 </h2>
-                <button onclick="handleWithdraw()" class="gold-btn withdraw-btn w-full !py-6 orbitron font-black tracking-[0.2em] text-xl transform hover:scale-[1.02]">
-                    PROCESS WITHDRAWAL
+                <button onclick="handleWithdraw()" class="btn-gold w-full py-5 text-lg font-black shadow-xl shadow-yellow-500/10">
+                    Withdraw USDT
                 </button>
-            </div>
-
-            <div class="premium-border p-10">
-                <div class="flex items-center gap-3 mb-10">
-                    <i data-lucide="activity" class="w-6 h-6 text-yellow-500"></i>
-                    <h3 class="text-lg font-black orbitron text-yellow-500 uppercase tracking-tighter">Network Live Data</h3>
-                </div>
-                <div class="space-y-8">
-                    <div class="flex justify-between items-center border-b border-white/5 pb-6">
-                        <div>
-                            <span class="text-white text-md font-bold orbitron">DIRECT PARTNERS</span>
-                            <p class="text-[10px] text-gray-500 mt-1 uppercase">Active referrals</p>
-                        </div>
-                        <span id="direct-count" class="font-black orbitron text-3xl text-white">0</span>
+                <div class="mt-6 pt-6 border-t border-white/5 flex justify-between">
+                    <div>
+                        <p class="text-[9px] text-gray-500 uppercase">Total Earned</p>
+                        <p id="total-earned" class="font-bold orbitron text-sm">0.00</p>
                     </div>
-                    <div class="flex justify-between items-center border-b border-white/5 pb-6">
-                        <div>
-                            <span class="text-white text-md font-bold orbitron">CAPPING LOSS</span>
-                            <p class="text-[10px] text-gray-500 mt-1 uppercase">Exceeded income limit</p>
-                        </div>
-                        <span id="capping-loss" class="font-black orbitron text-2xl text-red-500">0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center pt-2">
-                        <span class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Status</span>
-                        <span class="px-5 py-2 rounded-full bg-green-500/10 text-green-500 text-[10px] font-black border border-green-500/20 uppercase flex items-center gap-3">
-                            <div class="glow-dot"></div> SYSTEM ONLINE
-                        </span>
+                    <div class="text-right">
+                        <p class="text-[9px] text-red-500 uppercase font-bold">Income Cap Left</p>
+                        <p id="income-cap" class="font-bold orbitron text-sm text-red-400">0.00</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="premium-border p-8">
-            <h3 class="text-md font-black orbitron mb-8 flex items-center gap-3">
-                <i data-lucide="layers" class="w-5 h-5 text-yellow-500"></i>
-                YOUR <span class="text-yellow-500">LEVELS</span>
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="package-card p-6 border-l-4 border-l-yellow-500">
-                    <div class="flex justify-between items-center mb-3">
-                        <p class="text-[10px] text-gray-400 font-black uppercase">Starter</p>
-                        <span class="text-[9px] bg-yellow-500 text-black font-bold px-2 py-1 rounded">ACTIVE</span>
+        <div class="section-box p-8">
+            <div class="flex items-center gap-3 mb-8">
+                <i data-lucide="package" class="text-yellow-500"></i>
+                <h3 class="orbitron font-black text-white uppercase tracking-tighter">Available Packages</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="pkg-card p-6 flex flex-col justify-between" id="pkg-1">
+                    <div>
+                        <h4 class="text-gray-400 text-[10px] font-black uppercase mb-1">Entry Level</h4>
+                        <p class="text-3xl font-black orbitron text-white mb-4">10 <span class="text-xs text-gray-500">USDT</span></p>
+                        <ul class="text-[10px] text-gray-500 space-y-2 mb-6 uppercase font-bold">
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> 3X Income Cap</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Level Income</li>
+                        </ul>
                     </div>
-                    <p class="text-2xl font-black orbitron">10 USDT</p>
+                    <button onclick="handleBuyPackage(1)" class="btn-gold py-3 text-xs" id="btn-pkg-1">Buy Package</button>
                 </div>
+
+                <div class="pkg-card p-6 flex flex-col justify-between" id="pkg-2">
+                    <div>
+                        <h4 class="text-gray-400 text-[10px] font-black uppercase mb-1">Standard</h4>
+                        <p class="text-3xl font-black orbitron text-white mb-4">25 <span class="text-xs text-gray-500">USDT</span></p>
+                        <ul class="text-[10px] text-gray-500 space-y-2 mb-6 uppercase font-bold">
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Matrix Entry</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Global Pool</li>
+                        </ul>
+                    </div>
+                    <button onclick="handleBuyPackage(2)" class="btn-gold py-3 text-xs" id="btn-pkg-2">Buy Package</button>
                 </div>
+
+                <div class="pkg-card p-6 flex flex-col justify-between" id="pkg-3">
+                    <div>
+                        <h4 class="text-gray-400 text-[10px] font-black uppercase mb-1">Professional</h4>
+                        <p class="text-3xl font-black orbitron text-white mb-4">50 <span class="text-xs text-gray-500">USDT</span></p>
+                        <ul class="text-[10px] text-gray-500 space-y-2 mb-6 uppercase font-bold">
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Higher Returns</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Auto-Rebirth</li>
+                        </ul>
+                    </div>
+                    <button onclick="handleBuyPackage(3)" class="btn-gold py-3 text-xs" id="btn-pkg-3">Buy Package</button>
+                </div>
+
+                <div class="pkg-card p-6 flex flex-col justify-between" id="pkg-4">
+                    <div>
+                        <h4 class="text-gray-400 text-[10px] font-black uppercase mb-1">Elite</h4>
+                        <p class="text-3xl font-black orbitron text-white mb-4">100 <span class="text-xs text-gray-500">USDT</span></p>
+                        <ul class="text-[10px] text-gray-500 space-y-2 mb-6 uppercase font-bold">
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Max Capping</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> Priority Support</li>
+                        </ul>
+                    </div>
+                    <button onclick="handleBuyPackage(4)" class="btn-gold py-3 text-xs" id="btn-pkg-4">Buy Package</button>
+                </div>
+            </div>
         </div>
 
+        <div class="section-box p-8 mt-10">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <div class="flex-grow">
+                    <h3 class="orbitron font-black text-yellow-500 uppercase mb-2">Network Growth Link</h3>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-4">Share your link and earn 10% direct commission</p>
+                    <div class="flex items-center gap-3 bg-black/50 p-3 rounded-xl border border-white/5">
+                        <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-xs text-gray-400 font-mono px-2">
+                        <button onclick="copyLink()" id="copy-btn" class="text-yellow-500 hover:text-white transition-colors">
+                            <i data-lucide="copy" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full md:w-64 text-center p-6 bg-yellow-500/5 rounded-2xl border border-yellow-500/10">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Partners</p>
+                    <p id="direct-count" class="text-4xl font-black orbitron text-white">0</p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script src="web3-handler.js"></script>
     <script>
         lucide.createIcons();
 
-        function copyLink() {
-            const refInput = document.getElementById('refURL');
-            if (refInput.value.includes("Connecting")) {
-                alert("Please wait for blockchain sync...");
-                return;
+        // 1. Show Wallet Address and Join Date
+        async function updateProfile() {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    const addr = accounts[0];
+                    document.getElementById('wallet-address-display').innerText = 
+                        addr.substring(0, 6) + "..." + addr.substring(38);
+                    
+                    // User data se join date nikalein (Web3 call se)
+                    if(window.contract) {
+                        const userData = await window.contract.users(addr);
+                        const date = new Date(userData.registrationTime.toNumber() * 1000);
+                        document.getElementById('join-date').innerText = "Joined: " + date.toLocaleDateString();
+                        
+                        // Check active packages (Example logic)
+                        // Aapko apne contract ke hisaab se check karna hoga kaunsa package active hai
+                    }
+                }
             }
-            refInput.select();
-            navigator.clipboard.writeText(refInput.value);
-            
-            const btn = document.getElementById('copy-btn');
-            const originalText = btn.innerText;
-            btn.innerText = "COPIED!";
-            btn.style.background = "#22c55e";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "";
-            }, 2000);
         }
 
-        // Sync large balance with small balance
+        function copyLink() {
+            const refInput = document.getElementById('refURL');
+            if (refInput.value.includes("Syncing")) return;
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+            alert("Referral Link Copied!");
+        }
+
+        // Real-time Balance Sync
         setInterval(() => {
             const smallBal = document.getElementById('withdrawable-display').innerText;
             const largeBal = document.getElementById('balance-large');
             if(largeBal) largeBal.innerText = smallBal;
         }, 1000);
+
+        window.addEventListener('load', updateProfile);
     </script>
 </body>
 </html>
