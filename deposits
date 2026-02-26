@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Explorer | RebirthKey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #050505; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .tree-node { transition: all 0.3s ease; cursor: pointer; }
+        .tree-node:hover { transform: scale(1.05); border-color: #eab308; }
+        .active-node { border: 2px solid #eab308; background: rgba(234, 179, 8, 0.1); }
+        .line { height: 2px; background: rgba(255,255,255,0.1); flex-grow: 1; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <nav class="p-4 glass sticky top-0 z-50 flex justify-between items-center">
+        <a href="index1.html" class="text-xl font-black text-yellow-500 italic"><i class="fa-solid fa-arrow-left mr-2"></i> TEAM</a>
+        <button id="connect-btn" class="bg-yellow-500 text-black px-4 py-2 rounded-full font-bold text-sm">Connecting...</button>
+    </nav>
+
+    <div class="p-4 max-w-4xl mx-auto space-y-6">
+        
+        <div class="grid grid-cols-3 gap-3">
+            <div class="glass p-4 rounded-3xl text-center">
+                <p class="text-gray-400 text-xs uppercase">Directs</p>
+                <h2 id="direct-count" class="text-2xl font-black text-yellow-500">0</h2>
+            </div>
+            <div class="glass p-4 rounded-3xl text-center">
+                <p class="text-gray-400 text-xs uppercase">Total Team</p>
+                <h2 id="total-team" class="text-2xl font-black text-cyan-400">0</h2>
+            </div>
+            <div class="glass p-4 rounded-3xl text-center">
+                <p class="text-gray-400 text-xs uppercase">Active</p>
+                <h2 class="text-2xl font-black text-green-500">0</h2>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-[2.5rem] relative overflow-hidden">
+            <h3 class="font-bold mb-6 text-center text-gray-400"><i class="fa-solid fa-sitemap mr-2"></i> 2x2 STRUCTURE EXPLORER</h3>
+            
+            <div class="flex flex-col items-center space-y-8">
+                <div id="root-node" onclick="exploreNode(this.innerText)" class="tree-node glass w-32 p-3 rounded-2xl text-center border-2 border-white/20">
+                    <p class="text-[10px] text-gray-500">Main User</p>
+                    <span id="root-addr" class="text-xs font-mono">...</span>
+                </div>
+
+                <div class="w-full flex justify-around relative">
+                    <div id="lvl1-L" onclick="exploreNode(this.getAttribute('data-addr'))" class="tree-node glass w-28 p-3 rounded-2xl text-center border border-white/10">
+                        <p class="text-[10px] text-gray-500 font-bold">L1 - Left</p>
+                        <span class="addr text-[10px] font-mono">Empty</span>
+                    </div>
+                    <div id="lvl1-R" onclick="exploreNode(this.getAttribute('data-addr'))" class="tree-node glass w-28 p-3 rounded-2xl text-center border border-white/10">
+                        <p class="text-[10px] text-gray-500 font-bold">L1 - Right</p>
+                        <span class="addr text-[10px] font-mono">Empty</span>
+                    </div>
+                </div>
+
+                <div class="w-full flex justify-between gap-1">
+                    <div id="lvl2-1" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
+                        <span class="addr text-[8px] font-mono">Empty</span>
+                    </div>
+                    <div id="lvl2-2" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
+                        <span class="addr text-[8px] font-mono">Empty</span>
+                    </div>
+                    <div id="lvl2-3" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
+                        <span class="addr text-[8px] font-mono">Empty</span>
+                    </div>
+                    <div id="lvl2-4" class="glass w-20 p-2 rounded-xl text-center border border-white/5 opacity-60">
+                        <span class="addr text-[8px] font-mono">Empty</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="resetTree()" class="mt-8 w-full py-2 bg-white/5 rounded-xl text-xs text-gray-400 hover:bg-white/10">
+                <i class="fa-solid fa-sync mr-2"></i> Reset to My Tree
+            </button>
+        </div>
+
+        <div class="glass rounded-[2.5rem] p-6">
+            <h3 class="font-bold mb-4"><i class="fa-solid fa-users-viewfinder mr-2"></i> DIRECT PARTNERS</h3>
+            <div id="direct-list" class="space-y-3">
+                <p class="text-center text-gray-500 py-4">Loading partners...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 glass border-t border-white/10 p-4 flex justify-around items-center rounded-t-[2rem]">
+        <a href="index1.html" class="text-gray-500"><i class="fa-solid fa-house text-xl"></i></a>
+        <a href="team.html" class="text-yellow-500"><i class="fa-solid fa-users text-xl"></i></a>
+        <a href="history.html" class="text-gray-500"><i class="fa-solid fa-clock-rotate-left text-xl"></i></a>
+    </div>
+
+    <script src="web3-handler.js"></script>
+    <script>
+        let myAddress = "";
+
+        async function initTeamPage() {
+            if(!window.signer) {
+                setTimeout(initTeamPage, 1000);
+                return;
+            }
+            myAddress = await window.signer.getAddress();
+            updateText('root-addr', myAddress.substring(0,6)+"..."+myAddress.substring(38));
+            
+            // Initial Tree Load
+            loadTree(myAddress);
+            loadDirects();
+        }
+
+        async function loadTree(addr) {
+            if(!addr || addr === "0x0000000000000000000000000000000000000000") return;
+            
+            try {
+                const tree = await window.contract.getTeamTree2x2(addr);
+                
+                const updateNode = (id, nodeAddr) => {
+                    const el = document.getElementById(id);
+                    const span = el.querySelector('.addr');
+                    if(nodeAddr !== "0x0000000000000000000000000000000000000000") {
+                        span.innerText = nodeAddr.substring(0,6)+"..."+nodeAddr.substring(38);
+                        el.setAttribute('data-addr', nodeAddr);
+                        el.classList.add('active-node');
+                        el.style.opacity = "1";
+                    } else {
+                        span.innerText = "Empty";
+                        el.setAttribute('data-addr', "");
+                        el.classList.remove('active-node');
+                        el.style.opacity = "0.4";
+                    }
+                };
+
+                updateNode('lvl1-L', tree.level1_Left);
+                updateNode('lvl1-R', tree.level1_Right);
+                updateNode('lvl2-1', tree.level2_Pos1);
+                updateNode('lvl2-2', tree.level2_Pos2);
+                updateNode('lvl2-3', tree.level2_Pos3);
+                updateNode('lvl2-4', tree.level2_Pos4);
+
+            } catch(e) { console.error("Tree Error", e); }
+        }
+
+        async function loadDirects() {
+            try {
+                const data = await window.contract.getUserTotalData(myAddress);
+                updateText('direct-count', data.stats[4].toString());
+                
+                // Note: Agar contract mein getDirectList function nahi hai, 
+                // toh hum sirf counts hi dikha sakte hain ya Events fetch karne honge.
+                document.getElementById('direct-list').innerHTML = `
+                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-2xl">
+                        <span class="text-xs font-mono text-gray-400">Total Referrals Found</span>
+                        <span class="font-bold text-yellow-500">${data.stats[4]}</span>
+                    </div>
+                `;
+            } catch(e) { console.error(e); }
+        }
+
+        function exploreNode(addr) {
+            if(!addr) return;
+            document.getElementById('root-addr').innerText = addr.substring(0,6)+"..."+addr.substring(38);
+            loadTree(addr);
+        }
+
+        function resetTree() {
+            document.getElementById('root-addr').innerText = myAddress.substring(0,6)+"..."+myAddress.substring(38);
+            loadTree(myAddress);
+        }
+
+        window.addEventListener('load', initTeamPage);
+    </script>
+</body>
+</html>
