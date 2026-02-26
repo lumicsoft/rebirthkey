@@ -60,7 +60,13 @@
             color: black; font-weight: 900; border-radius: 10px;
             text-transform: uppercase; transition: 0.3s; width: 100%; padding: 10px;
         }
-        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        /* Button Disabled Style */
+        .btn-action:disabled {
+            background: #222;
+            color: #555;
+            cursor: not-allowed;
+            border: 1px solid #333;
+        }
         .icon-box { color: var(--gold); }
     </style>
 </head>
@@ -130,7 +136,7 @@
 
         <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
         <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            </div>
+             </div>
 
     </main>
 
@@ -145,17 +151,17 @@
             { id: 9, price: 5152 }, { id: 10, price: 10273 }, { id: 11, price: 20514 }
         ];
 
-        // Is function ko web3-handler.js se call kiya jayega
+        // Is function ko blockchain data aane par call kiya jata hai
         async function renderPackages(activeLevelFromBlockchain = -1) {
             const container = document.getElementById('package-grid');
             if(!container) return;
 
             container.innerHTML = packageData.map(pkg => {
-                // Blockchain level check
-                const isActive = pkg.id <= activeLevelFromBlockchain; 
+                // Agar user ka current index pkg.id se bada ya barabar hai toh active
+                const isActive = activeLevelFromBlockchain >= pkg.id; 
                 
                 return `
-                <div class="gold-border-fixed p-6 flex flex-col justify-between relative min-h-[250px] ${isActive ? 'bg-yellow-500/5' : ''}">
+                <div class="gold-border-fixed p-6 flex flex-col justify-between relative min-h-[250px] ${isActive ? 'bg-green-500/5 border-green-500/50' : ''}">
                     <div class="status-container">
                         <div class="status-dot ${isActive ? 'dot-active' : 'dot-inactive'}"></div>
                         <p class="text-[8px] font-black uppercase ${isActive ? 'text-green-500' : 'text-red-500'}">
@@ -173,7 +179,7 @@
                     <button onclick="handleBuyPackage(${pkg.id})" 
                             class="btn-action" 
                             ${isActive ? 'disabled' : ''}>
-                        ${isActive ? 'ALREADY OWNED' : 'BUY NOW'}
+                        ${isActive ? 'OWNED' : 'BUY NOW'}
                     </button>
                 </div>
             `}).join('');
@@ -188,17 +194,25 @@
             alert("Referral link copied!");
         }
 
-        // Initial Load (Default view)
+        // --- AUTOMATIC SYNC LOGIC ---
+        let lastKnownLevel = -2; // Track change
+
         window.addEventListener('load', () => {
-            renderPackages(-1);
+            renderPackages(-1); // Initial state (all inactive)
             
-            // Watch for blockchain sync every 2 seconds
+            // Ye loop har 1 second mein check karega ki data load hua ya nahi
             setInterval(() => {
                 if (window.userData && window.userData.currentPackageId !== undefined) {
-                    // Agar web3-handler data load kar chuka hai toh update karein
-                    renderPackages(window.userData.currentPackageId);
+                    const currentLevel = parseInt(window.userData.currentPackageId);
+                    
+                    // Sirf tabhi re-render karein jab level change ho
+                    if (currentLevel !== lastKnownLevel) {
+                        lastKnownLevel = currentLevel;
+                        renderPackages(currentLevel);
+                        console.log("Dashboard Updated: User Level", currentLevel);
+                    }
                 }
-            }, 2000);
+            }, 1000);
         });
     </script>
 </body>
