@@ -121,47 +121,77 @@ window.handleLogin = async function() {
 }
 
 window.handleRegister = async function() {
-    console.log("Register function triggered");
+    console.log("Register function started...");
     
-    // 1. Check if wallet is connected
-    if (!window.userAddress || !window.contract) {
-        alert("Please connect your wallet first!");
-        if(typeof init === 'function') await init();
-        return;
-    }
-
-    const refField = document.getElementById('reg-referrer');
-    const referrerAddress = refField.value.trim();
-
-    // 2. Validate Address format
-    if (!ethers.utils.isAddress(referrerAddress)) {
-        alert("Invalid Referrer Address! Must be a 0x... wallet address.");
-        return;
-    }
-
     try {
-        console.log("Registering with ref:", referrerAddress);
-        
-        // 3. Add manual Gas Limit to prevent "Internal JSON-RPC error"
-        const tx = await window.contract.register(referrerAddress, {
-            gasLimit: ethers.utils.hexlify(300000) 
+        // 1. Check if Provider exists
+        if (!window.ethereum) {
+            alert("MetaMask or Trust Wallet not found!");
+            return;
+        }
+
+        // 2. Re-initialize if signer is missing
+        if (!signer) {
+            const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
+            await tempProvider.send("eth_requestAccounts", []);
+            signer = tempProvider.getSigner();
+            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        }
+
+        const userAddress = await signer.getAddress();
+        const refField = document.getElementById('reg-referrer');
+        const referrerAddress = refField ? refField.value.trim() : "";
+
+        // 3. Validation
+        if (!ethers.utils.isAddress(referrerAddress)) {
+            alert("Please enter a valid Referrer Wallet Address (0x...)");
+            return;
+        }
+
+        if (referrerAddress.toLowerCase() === userAddress.toLowerCase()) {
+            alert("You cannot refer yourself!");
+            return;
+        }
+
+        console.log("Registering:", userAddress, "with Ref:", referrerAddress);
+
+        // 4. Update Button UI
+        const btn = document.getElementById('reg-btn');
+        if(btn) {
+            btn.disabled = true;
+            btn.innerText = "CONFIRMING IN WALLET...";
+        }
+
+        // 5. Send Transaction with Manual Gas Limit (Zaruri hai failure rokne ke liye)
+        const tx = await contract.register(referrerAddress, {
+            gasLimit: 400000 
         });
 
-        alert("Transaction sent to blockchain! Wait for confirmation...");
+        alert("Transaction sent! Please wait for confirmation.");
         const receipt = await tx.wait();
 
         if (receipt.status === 1) {
             alert("Registration Successful!");
             window.location.href = "index1.html";
+        } else {
+            throw new Error("Transaction failed on blockchain.");
         }
+
     } catch (err) {
         console.error("Detailed Error:", err);
-        // User friendly error
-        const msg = err.data ? err.data.message : err.message;
-        alert("Blockchain Error: " + (msg.includes("revert") ? "Already registered or invalid ref" : msg));
+        const btn = document.getElementById('reg-btn');
+        if(btn) {
+            btn.disabled = false;
+            btn.innerText = "REGISTER NOW";
+        }
+        
+        let msg = err.reason || err.message || "Unknown error";
+        if(msg.includes("user rejected")) msg = "User cancelled the transaction.";
+        if(msg.includes("revert")) msg = "Transaction Reverted: Maybe already registered or invalid ref.";
+        
+        alert("Error: " + msg);
     }
 }
-
 window.handleLogout = function() {
     if (confirm("Do you want to disconnect?")) {
         localStorage.setItem('manualLogout', 'true');
@@ -366,4 +396,5 @@ if (window.ethereum) {
 
 
 window.addEventListener('load', init);
+
 
