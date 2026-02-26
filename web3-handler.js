@@ -224,12 +224,14 @@ async function setupApp(address) {
 
         window.userData.isRegistered = isRegistered;
 
+        // Redirect logic for unregistered users
         if (!isRegistered) {
             if (!path.includes('register') && !path.includes('login')) {
                 window.location.href = "register.html"; 
                 return; 
             }
         } else {
+            // Redirect logic for registered users (avoid login/register pages)
             if (path.includes('register') || path.includes('login') || path.endsWith('index.html')) {
                 window.location.href = "index1.html";
                 return;
@@ -239,10 +241,24 @@ async function setupApp(address) {
         updateNavbar(address);
         showLogoutIcon(address); 
 
+        // Dashboard Path
         if (path.includes('index1')) {
             await fetchAllData(address);
         }
 
+        // --- NEW: TEAM PAGE PATH ---
+        if (path.includes('team')) {
+            // Agar team.html par initTeamPage() function hai toh usey trigger karega
+            if (typeof initTeamPage === "function") {
+                await initTeamPage();
+            } else {
+                // Fallback: Agar function nahi mil raha toh seedha basics load karega
+                await fetchAllData(address); 
+                if(window.loadTree) window.loadTree(address);
+            }
+        }
+
+        // History Path
         if (path.includes('history')) {
             window.showHistory('deposit');
         }
@@ -398,3 +414,4 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
