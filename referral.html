@@ -108,64 +108,61 @@
             loadMatrixHistory();
         }
 
-       async function loadMatrixHistory() {
+      async function loadMatrixHistory() {
     const pkgId = document.getElementById('pkg-selector').value;
     const grid = document.getElementById('history-grid');
     
-    // 1. Loading State
     grid.innerHTML = `
         <div class="col-span-full text-center py-20 opacity-50">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
-            <p class="orbitron text-xs text-yellow-500">Syncing with Blockchain...</p>
+            <p class="orbitron text-xs text-yellow-500">Scanning Blockchain Data...</p>
         </div>`;
     lucide.createIcons();
 
     try {
-        // Contract se array fetch kar rahe hain
-        // Expected Response: [ ["index", "filledCount", "slotA", "slotB", "slotC"], [...] ]
+        console.log("Fetching history for:", myAddress, "Package:", pkgId);
+        
+        // Data fetch call
         const history = await window.getAllMatrixHistory(myAddress, pkgId);
         
+        console.log("Raw History Received:", history); // Isse console mein check karein
+
         grid.innerHTML = "";
 
         if(!history || history.length === 0) {
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
-                    <p class="text-gray-500 orbitron text-xs uppercase tracking-widest">No Rebirth History Found</p>
-                </div>`;
+            grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                <p class="text-gray-500 orbitron text-xs uppercase">No Records Found</p>
+            </div>`;
             return;
         }
 
-        // 2. Loop through all nodes
-        // Latest data pehle dikhane ke liye reverse loop
+        // Loop: Newest to Oldest
         for(let i = history.length - 1; i >= 0; i--) {
             const node = history[i];
-            
-            // --- DATA MAPPING (BASED ON YOUR CONTRACT RESPONSE) ---
-            const rawIndex = node[0];    // Index
-            const filledCount = node[1]; // Filled Count
-            const sA = node[2];          // Slot A
-            const sB = node[3];          // Slot B
-            const sC = node[4];          // Slot C
+
+            // --- FAIL-SAFE MAPPING ---
+            // Hum dono formats check kar rahe hain (Array index aur Object keys)
+            const idx = node[0] !== undefined ? node[0] : (node.index || 0);
+            const count = node[1] !== undefined ? node[1] : (node.filledCount || 0);
+            const sA = node[2] || node.slotA || "0x0000000000000000000000000000000000000000";
+            const sB = node[3] || node.slotB || "0x0000000000000000000000000000000000000000";
+            const sC = node[4] || node.slotC || "0x0000000000000000000000000000000000000000";
+
+            const isComplete = parseInt(count) >= 3;
+            const displayIdx = parseInt(idx) + 1; // Dashboard Match
 
             const card = document.createElement('div');
             card.className = "matrix-card p-6";
-            
-            // Fix: Dashboard Match Index (+1)
-            const displayIndex = parseInt(rawIndex) + 1;
-            
-            // Check if node is complete
-            const isComplete = parseInt(filledCount) >= 3;
-
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-6">
                     <div>
-                        <span class="text-[10px] text-yellow-500 font-black orbitron uppercase">Matrix Cycle</span>
-                        <h4 class="text-xl font-black orbitron">#${displayIndex}</h4>
+                        <span class="text-[10px] text-yellow-500 font-black orbitron uppercase">Node</span>
+                        <h4 class="text-xl font-black orbitron">#${displayIdx}</h4>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Progress</span>
+                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Status</span>
                         <p class="text-[10px] font-bold ${isComplete ? 'text-green-500' : 'text-blue-400'}">
-                            ${filledCount}/3 Slots
+                            ${count}/3 Filled
                         </p>
                     </div>
                 </div>
@@ -178,28 +175,20 @@
 
                 <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
                     <span class="text-[9px] text-gray-600 font-bold uppercase italic">
-                        ${i === history.length - 1 ? 'Current Active Node' : 'Completed Cycle'}
+                        ${i === history.length - 1 ? 'Current Active' : 'Closed Rebirth'}
                     </span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-bold ${isComplete ? 'text-green-500' : 'text-yellow-500'}">
-                            ${isComplete ? 'FILLED' : 'OPEN'}
-                        </span>
-                        <i data-lucide="${isComplete ? 'check-circle-2' : 'refresh-cw'}" 
-                           class="w-4 h-4 ${isComplete ? 'text-green-500' : 'text-yellow-500 ${!isComplete ? 'animate-spin-slow' : ''}'}"></i>
-                    </div>
+                    <i data-lucide="${isComplete ? 'check-circle-2' : 'refresh-cw'}" 
+                       class="w-4 h-4 ${isComplete ? 'text-green-500' : 'text-blue-500'}"></i>
                 </div>
             `;
             grid.appendChild(card);
         }
         lucide.createIcons();
     } catch(e) {
-        console.error("Critical History Error:", e);
-        grid.innerHTML = `<div class="col-span-full text-center text-red-500 p-10 bg-red-500/10 rounded-xl border border-red-500/20">
-            <p class="orbitron text-xs">Blockchain Error: Data mapping failed or connection lost.</p>
-        </div>`;
+        console.error("Critical Error in loadMatrixHistory:", e);
+        grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Error: ${e.message}</p>`;
     }
-}
-        function renderSlot(label, addr) {
+}     function renderSlot(label, addr) {
             const isFilled = addr !== "0x0000000000000000000000000000000000000000";
             return `
                 <div class="flex items-center gap-3 bg-black/20 p-2 rounded-lg border border-white/5">
