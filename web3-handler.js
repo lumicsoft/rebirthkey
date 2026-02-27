@@ -373,28 +373,49 @@ window.loadSpecificMatrixNode = async function(pkgId, index) {
 window.getAllMatrixHistory = async function(userAddr, pkgId) {
     try {
         const activeContract = window.contract || contract;
-        const totalRebirths = await activeContract.rebirthCount(userAddr, pkgId);
+        
+        // 1. Pehle Latest Node fetch karein
+        const lastNode = await activeContract.getLatestMatrixNode(userAddr, pkgId);
+        
+        // Agar user matrix mein hi nahi hai (Index 0 hai aur owner address zero hai)
+        if (!lastNode || lastNode.ownerAddr === "0x0000000000000000000000000000000000000000") {
+            console.log("User not in this matrix package yet.");
+            return [];
+        }
+
+        // 2. Total Rebirths fetch karein
+        const totalRebirthsBN = await activeContract.rebirthCount(userAddr, pkgId);
+        const totalRebirths = totalRebirthsBN.toNumber();
         
         let history = [];
-        // Loop through all rebirths to get each node's data
-        // Note: Index starts from user's first matrix index
-        const lastNode = await activeContract.getLatestMatrixNode(userAddr, pkgId);
-        let startIdx = lastNode.userMatrixIndex.toNumber() - totalRebirths.toNumber();
+        let latestIdx = lastNode.userMatrixIndex.toNumber();
+        
+        // 3. Loop: Piche ki taraf (Latest se Shuru karke)
+        // Jitne rebirths hain, utne nodes piche jayenge
+        for(let i = 0; i <= totalRebirths; i++) {
+            const currentIdx = latestIdx - i;
+            
+            // Safety check: Index 0 se niche nahi jana chahiye
+            if (currentIdx < 0) break; 
 
-        for(let i = 0; i <= totalRebirths.toNumber(); i++) {
-            const currentIdx = startIdx + i;
-            const details = await activeContract.getMatrixTree(pkgId, currentIdx);
-            history.push({
-                index: currentIdx,
-                filledCount: details.filledCount.toNumber(),
-                slotA: details.slotA,
-                slotB: details.slotB,
-                slotC: details.slotC
-            });
+            try {
+                const details = await activeContract.getMatrixTree(pkgId, currentIdx);
+                history.push({
+                    index: currentIdx,
+                    filledCount: details.filledCount.toString(),
+                    slotA: details.slotA,
+                    slotB: details.slotB,
+                    slotC: details.slotC
+                });
+            } catch (innerErr) {
+                console.warn("Could not fetch node at index:", currentIdx);
+            }
         }
+        
+        console.log("History Fetched Successfully:", history);
         return history;
     } catch (e) {
-        console.error("History Fetch Error:", e);
+        console.error("Critical History Fetch Error:", e);
         return [];
     }
 }
@@ -473,6 +494,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
