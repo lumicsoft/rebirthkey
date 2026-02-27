@@ -348,7 +348,56 @@ window.load2x2Tree = async function(userAddr) {
         updateNode('lvl2-4', tree.level2_Pos4);
     } catch (e) { console.error("Tree Error", e); }
 }
+// --- SPECIFIC MATRIX NODE FETCH ---
+window.loadSpecificMatrixNode = async function(pkgId, index) {
+    try {
+        const activeContract = window.contract || contract;
+        
+        // Calling the function you added to ABI
+        const data = await activeContract.getMatrixTree(pkgId, index);
 
+        // Data Structure mapping
+        return {
+            owner: data.ownerAddr,
+            filledCount: data.filledCount.toNumber(),
+            rebirths: data.ownerRebirths.toNumber(),
+            slots: [data.slotA, data.slotB, data.slotC]
+        };
+    } catch (e) {
+        console.error("Matrix Tree Fetch Error:", e);
+        return null;
+    }
+}
+
+// --- NEW: FETCH ALL HISTORY (For the History Page) ---
+window.getAllMatrixHistory = async function(userAddr, pkgId) {
+    try {
+        const activeContract = window.contract || contract;
+        const totalRebirths = await activeContract.rebirthCount(userAddr, pkgId);
+        
+        let history = [];
+        // Loop through all rebirths to get each node's data
+        // Note: Index starts from user's first matrix index
+        const lastNode = await activeContract.getLatestMatrixNode(userAddr, pkgId);
+        let startIdx = lastNode.userMatrixIndex.toNumber() - totalRebirths.toNumber();
+
+        for(let i = 0; i <= totalRebirths.toNumber(); i++) {
+            const currentIdx = startIdx + i;
+            const details = await activeContract.getMatrixTree(pkgId, currentIdx);
+            history.push({
+                index: currentIdx,
+                filledCount: details.filledCount.toNumber(),
+                slotA: details.slotA,
+                slotB: details.slotB,
+                slotC: details.slotC
+            });
+        }
+        return history;
+    } catch (e) {
+        console.error("History Fetch Error:", e);
+        return [];
+    }
+}
 // --- GLOBAL DATA FETCH ---
 async function fetchAllData(address) {
     try {
@@ -424,6 +473,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
