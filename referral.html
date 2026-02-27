@@ -15,6 +15,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg-dark); color: white; 
             background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 80%);
+            min-height: 100vh;
         }
         .orbitron { font-family: 'Orbitron', sans-serif; }
         
@@ -52,6 +53,9 @@
 </head>
 <body class="pb-24">
 
+    <div id="header-placeholder"></div>
+    <div id="nav-placeholder"></div>
+
     <main class="max-w-6xl mx-auto px-4 pt-10">
         
         <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
@@ -79,19 +83,23 @@
 
         <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="col-span-full text-center py-20 opacity-50">
-                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4"></i>
-                <p class="orbitron text-xs">Fetching Matrix History...</p>
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
+                <p class="orbitron text-xs text-yellow-500">Fetching Matrix History...</p>
             </div>
         </div>
 
     </main>
 
+    <div id="footer-placeholder"></div>
+
+    <script src="components.js"></script>
     <script src="web3-handler.js"></script>
     <script>
         lucide.createIcons();
         let myAddress = "";
 
         async function initPage() {
+            // Wait for web3 connection
             if(!window.signer) {
                 setTimeout(initPage, 1000);
                 return;
@@ -100,76 +108,73 @@
             loadMatrixHistory();
         }
 
-       async function loadMatrixHistory() {
-    const pkgId = document.getElementById('pkg-selector').value;
-    const grid = document.getElementById('history-grid');
-    
-    // Loader show karein
-    grid.innerHTML = `
-        <div class="col-span-full text-center py-20 opacity-50">
-            <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
-            <p class="orbitron text-xs text-yellow-500">Scanning Blockchain for Rebirths...</p>
-        </div>`;
-    lucide.createIcons();
-
-    try {
-        // CORRECTION: window.contract ki jagah direct function call karein
-        // Kyunki ye function web3-handler.js mein window object par define hai
-        const history = await window.getAllMatrixHistory(myAddress, pkgId);
-        
-        grid.innerHTML = "";
-
-        if(!history || history.length === 0) {
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
-                    <p class="text-gray-500 orbitron text-xs">No Matrix Records Found for this Package</p>
-                </div>`;
-            return;
-        }
-
-        // Reverse loop (Newest First)
-        for(let i = history.length - 1; i >= 0; i--) {
-            const node = history[i];
-            const card = document.createElement('div');
-            card.className = "matrix-card p-6";
+        async function loadMatrixHistory() {
+            const pkgId = document.getElementById('pkg-selector').value;
+            const grid = document.getElementById('history-grid');
             
-            // UI Render Logic
-            card.innerHTML = `
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <span class="text-[10px] text-yellow-500 font-black orbitron uppercase">Node Index</span>
-                        <h4 class="text-xl font-black orbitron">#${node.index}</h4>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Status</span>
-                        <p class="text-[10px] font-bold ${node.filledCount >= 3 ? 'text-green-500' : 'text-blue-400'}">
-                            ${node.filledCount}/3 Slots Filled
-                        </p>
-                    </div>
-                </div>
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-20 opacity-50">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
+                    <p class="orbitron text-xs text-yellow-500">Scanning Blockchain for Rebirths...</p>
+                </div>`;
+            lucide.createIcons();
 
-                <div class="space-y-4">
-                    ${renderSlot("Slot A", node.slotA)}
-                    ${renderSlot("Slot B", node.slotB)}
-                    ${renderSlot("Slot C", node.slotC)}
-                </div>
+            try {
+                // Global function from web3-handler.js
+                const history = await window.getAllMatrixHistory(myAddress, pkgId);
+                
+                grid.innerHTML = "";
 
-                <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span class="text-[9px] text-gray-600 font-bold uppercase italic">
-                        ${i === history.length - 1 ? 'Current Active' : 'Completed Rebirth'}
-                    </span>
-                    <i data-lucide="${node.filledCount >= 3 ? 'check-circle-2' : 'refresh-cw'}" 
-                       class="w-4 h-4 ${node.filledCount >= 3 ? 'text-green-500' : 'text-blue-500 animate-pulse'}"></i>
-                </div>
-            `;
-            grid.appendChild(card);
+                if(!history || history.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                            <p class="text-gray-500 orbitron text-xs">No Matrix Records Found for this Package</p>
+                        </div>`;
+                    return;
+                }
+
+                // Render cards (Newest First)
+                for(let i = history.length - 1; i >= 0; i--) {
+                    const node = history[i];
+                    const card = document.createElement('div');
+                    card.className = "matrix-card p-6";
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="text-[10px] text-yellow-500 font-black orbitron uppercase">Node Index</span>
+                                <h4 class="text-xl font-black orbitron">#${node.index}</h4>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Status</span>
+                                <p class="text-[10px] font-bold ${node.filledCount >= 3 ? 'text-green-500' : 'text-blue-400'}">
+                                    ${node.filledCount}/3 Slots Filled
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            ${renderSlot("Slot A", node.slotA)}
+                            ${renderSlot("Slot B", node.slotB)}
+                            ${renderSlot("Slot C", node.slotC)}
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+                            <span class="text-[9px] text-gray-600 font-bold uppercase italic">
+                                ${i === history.length - 1 ? 'Current Active' : 'Completed Rebirth'}
+                            </span>
+                            <i data-lucide="${node.filledCount >= 3 ? 'check-circle-2' : 'refresh-cw'}" 
+                               class="w-4 h-4 ${node.filledCount >= 3 ? 'text-green-500' : 'text-blue-500 animate-pulse'}"></i>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+                lucide.createIcons();
+            } catch(e) {
+                console.error("History Load Error:", e);
+                grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Error loading history. Check console.</p>`;
+            }
         }
-        lucide.createIcons();
-    } catch(e) {
-        console.error("History Load Error:", e);
-        grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Error loading history. Check console for details.</p>`;
-    }
-}
 
         function renderSlot(label, addr) {
             const isFilled = addr !== "0x0000000000000000000000000000000000000000";
