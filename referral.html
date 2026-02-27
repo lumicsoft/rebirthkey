@@ -120,13 +120,7 @@
     lucide.createIcons();
 
     try {
-        console.log("Fetching history for:", myAddress, "Package:", pkgId);
-        
-        // Data fetch call
         const history = await window.getAllMatrixHistory(myAddress, pkgId);
-        
-        console.log("Raw History Received:", history); // Isse console mein check karein
-
         grid.innerHTML = "";
 
         if(!history || history.length === 0) {
@@ -136,31 +130,36 @@
             return;
         }
 
-        // Loop: Newest to Oldest
+        // Loop: Newest to Oldest (i=0 is oldest rebirth, i=length-1 is latest)
         for(let i = history.length - 1; i >= 0; i--) {
             const node = history[i];
 
-            // --- FAIL-SAFE MAPPING ---
-            // Hum dono formats check kar rahe hain (Array index aur Object keys)
+            // Mapping from Array or Object
             const idx = node[0] !== undefined ? node[0] : (node.index || 0);
             const count = node[1] !== undefined ? node[1] : (node.filledCount || 0);
             const sA = node[2] || node.slotA || "0x0000000000000000000000000000000000000000";
             const sB = node[3] || node.slotB || "0x0000000000000000000000000000000000000000";
             const sC = node[4] || node.slotC || "0x0000000000000000000000000000000000000000";
 
+            // LOGIC FIX: Check if this node is incomplete (Active) or finished
             const isComplete = parseInt(count) >= 3;
-            const displayIdx = parseInt(idx) + 1; // Dashboard Match
+            // Agar ye latest node hai aur 3 se kam bhare hain, toh ye Current Active hai
+            const isActuallyActive = (i === history.length - 1) && !isComplete;
+            
+            const displayIdx = parseInt(idx) + 1;
 
             const card = document.createElement('div');
-            card.className = "matrix-card p-6";
+            card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`;
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-6">
                     <div>
-                        <span class="text-[10px] text-yellow-500 font-black orbitron uppercase">Node</span>
+                        <span class="text-[10px] ${isActuallyActive ? 'text-yellow-500' : 'text-gray-500'} font-black orbitron uppercase">
+                            ${isActuallyActive ? 'Active Cycle' : 'Matrix Node'}
+                        </span>
                         <h4 class="text-xl font-black orbitron">#${displayIdx}</h4>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Status</span>
+                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Progress</span>
                         <p class="text-[10px] font-bold ${isComplete ? 'text-green-500' : 'text-blue-400'}">
                             ${count}/3 Filled
                         </p>
@@ -174,21 +173,27 @@
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span class="text-[9px] text-gray-600 font-bold uppercase italic">
-                        ${i === history.length - 1 ? 'Current Active' : 'Closed Rebirth'}
+                    <span class="text-[9px] font-bold uppercase italic ${isActuallyActive ? 'text-yellow-500' : 'text-gray-600'}">
+                        ${isActuallyActive ? 'Current Active Node' : 'Closed Rebirth'}
                     </span>
-                    <i data-lucide="${isComplete ? 'check-circle-2' : 'refresh-cw'}" 
-                       class="w-4 h-4 ${isComplete ? 'text-green-500' : 'text-blue-500'}"></i>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-bold ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500' : 'text-gray-600')}">
+                            ${isComplete ? 'COMPLETED' : (isActuallyActive ? 'IN PROGRESS' : 'CLOSED')}
+                        </span>
+                        <i data-lucide="${isComplete ? 'check-circle-2' : (isActuallyActive ? 'refresh-cw' : 'lock')}" 
+                           class="w-4 h-4 ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500 animate-spin-slow' : 'text-gray-600')}"></i>
+                    </div>
                 </div>
             `;
             grid.appendChild(card);
         }
         lucide.createIcons();
     } catch(e) {
-        console.error("Critical Error in loadMatrixHistory:", e);
-        grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Error: ${e.message}</p>`;
+        console.error("Critical History Error:", e);
+        grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Sync Error: ${e.message}</p>`;
     }
-}     function renderSlot(label, addr) {
+}
+        function renderSlot(label, addr) {
             const isFilled = addr !== "0x0000000000000000000000000000000000000000";
             return `
                 <div class="flex items-center gap-3 bg-black/20 p-2 rounded-lg border border-white/5">
