@@ -75,8 +75,7 @@
             </div>
         </div>
 
-        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
+        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
     </main>
 
@@ -104,41 +103,40 @@
             grid.innerHTML = `
                 <div class="col-span-full text-center py-20 opacity-50">
                     <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
-                    <p class="orbitron text-xs text-yellow-500">Scanning Blockchain Data...</p>
+                    <p class="orbitron text-xs text-yellow-500">Fetching Matrix Nodes...</p>
                 </div>`;
             lucide.createIcons();
 
             try {
-                // Fetching from web3-handler.js (Array of Objects)
+                // Fetch data from web3-handler
                 const history = await window.getAllMatrixHistory(myAddress, pkgId);
-                console.log("History received for rendering:", history);
+                console.log("Rendering History Array:", history);
 
                 grid.innerHTML = "";
 
                 if(!history || history.length === 0) {
-                    grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
-                        <p class="text-gray-500 orbitron text-xs uppercase">No Records Found</p>
-                    </div>`;
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                            <p class="text-gray-500 orbitron text-xs uppercase">No History Found for this Package</p>
+                        </div>`;
                     return;
                 }
 
-                // Render Newest to Oldest
-                for(let i = history.length - 1; i >= 0; i--) {
-                    const node = history[i];
-
-                    // Mapping keys as per your console output object structure
-                    const idx = node.index !== undefined ? node.index : i;
+                // Loop through data
+                history.forEach((node, index) => {
+                    // MAP DATA CAREFULLY BASED ON YOUR CONSOLE LOG
+                    const idx = node.index !== undefined ? node.index : index;
                     const count = node.filledCount !== undefined ? node.filledCount : 0;
                     const sA = node.slotA || "0x0000000000000000000000000000000000000000";
                     const sB = node.slotB || "0x0000000000000000000000000000000000000000";
                     const sC = node.slotC || "0x0000000000000000000000000000000000000000";
 
                     const isComplete = parseInt(count) >= 3;
-                    const isActuallyActive = (i === history.length - 1) && !isComplete;
+                    const isActuallyActive = (index === history.length - 1) && !isComplete;
                     const displayIdx = parseInt(idx) + 1;
 
                     const card = document.createElement('div');
-                    card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/5' : ''}`;
+                    card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`;
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-6">
                             <div>
@@ -174,12 +172,14 @@
                             </div>
                         </div>
                     `;
-                    grid.appendChild(card);
-                }
+                    // grid.prepend cards ko ulta (naye upar) add karega
+                    grid.prepend(card);
+                });
+
                 lucide.createIcons();
             } catch(e) {
-                console.error("Critical History Error:", e);
-                grid.innerHTML = `<p class="text-red-500 text-center col-span-full py-10">Sync Error. Check Console.</p>`;
+                console.error("UI Render Error:", e);
+                grid.innerHTML = `<p class="text-red-500 text-center col-span-full py-10">Data Display Error. Check Console.</p>`;
             }
         }
 
