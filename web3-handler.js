@@ -249,14 +249,16 @@ async function setupApp(address) {
         if (path.includes('index1')) {
             await fetchAllData(address);
         }
-// --- ADDED: REFERRAL/MATRIX PAGE PATH ---
-        if (path.includes('referral')) {
-            if (typeof initReferralPage === "function") {
-                await initReferralPage();
-            } else {
-                console.log("initReferralPage function not found on this page");
-            }
-        }
+// Is block ko replace karein
+if (path.includes('referral') || path.includes('deposits')) {
+    if (typeof initReferralPage === "function") {
+        await initReferralPage();
+    } else if (typeof initTeamPage === "function") {
+        await initTeamPage();
+    } else {
+        console.log("Page specific init function not found - Skipping");
+    }
+}
         // --- UPDATED: DEPOSITS PAGE PATH ---
         if (path.includes('deposits')) {
             // Agar deposits.html par initTeamPage() ya koi specific initialization hai
@@ -494,6 +496,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
