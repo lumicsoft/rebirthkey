@@ -156,54 +156,42 @@
             loadMatrix();
         }
 
-        async function loadMatrix() {
-            const pkgId = document.getElementById('pkg-selector').value;
-            try {
-                // Smart contract call: getLatestMatrixNode(user, pkgId)
-                const data = await window.contract.getLatestMatrixNode(myAddress, pkgId);
-                
-                // data = [userMatrixIndex, ownerAddr, filledCount, slotA, slotB, slotC]
-                const index = data[0].toString();
-                const slots = [data[3], data[4], data[5]];
-                
-                document.getElementById('current-idx').innerText = "#" + index;
+       async function loadMatrix() {
+    const pkgId = document.getElementById('pkg-selector').value;
+    try {
+        // ABI update hone ke baad ye function ab kaam karega
+        const data = await window.contract.getLatestMatrixNode(myAddress, pkgId);
+        
+        // Data extraction
+        const index = data.userMatrixIndex.toString();
+        const slots = [data.slotA, data.slotB, data.slotC];
+        
+        document.getElementById('current-idx').innerText = "#" + index;
 
-                // Update Rebirth Count from rebirthCount mapping
-                const rebCount = await window.contract.rebirthCount(myAddress, pkgId);
-                document.getElementById('reentry-display').innerText = rebCount.toString();
+        // Rebirth count fetch
+        const reb = await window.contract.rebirthCount(myAddress, pkgId);
+        document.getElementById('reentry-display').innerText = reb.toString();
 
-                // Update Slots Visuals
-                slots.forEach((addr, i) => {
-                    const slotEl = document.getElementById(`slot-${i}`);
-                    const icon = slotEl.querySelector('i');
-                    const addrText = slotEl.querySelector('.addr-text');
-                    const status = slotEl.querySelector('.status-badge');
-
-                    if(addr !== "0x0000000000000000000000000000000000000000") {
-                        slotEl.classList.add('filled-node');
-                        icon.setAttribute('data-lucide', 'check-circle-2');
-                        icon.classList.replace('text-gray-800', 'text-yellow-500');
-                        addrText.innerText = addr.substring(0,6)+"..."+addr.substring(38);
-                        addrText.classList.replace('text-gray-600', 'text-yellow-500/70');
-                        status.innerText = "FILLED";
-                        status.classList.replace('text-red-500/50', 'text-green-500');
-                    } else {
-                        slotEl.classList.remove('filled-node');
-                        icon.setAttribute('data-lucide', 'circle-dashed');
-                        icon.classList.add('text-gray-800');
-                        addrText.innerText = "0x00...000";
-                        addrText.classList.add('text-gray-600');
-                        status.innerText = "EMPTY";
-                        status.classList.add('text-red-500/50');
-                    }
-                });
-
-                lucide.createIcons();
-            } catch(e) { 
-                console.error("Matrix Load Error", e); 
+        // UI Update Loop
+        slots.forEach((addr, i) => {
+            const slotEl = document.getElementById(`slot-${i}`);
+            if(addr !== ethers.constants.AddressZero) {
+                slotEl.classList.add('filled-node');
+                slotEl.querySelector('.addr-text').innerText = addr.substring(0,6)+"..."+addr.substring(38);
+                slotEl.querySelector('.status-badge').innerText = "FILLED";
+                slotEl.querySelector('.status-badge').className = "status-badge text-[9px] font-black uppercase text-green-500";
+            } else {
+                slotEl.classList.remove('filled-node');
+                slotEl.querySelector('.addr-text').innerText = "0x00...000";
+                slotEl.querySelector('.status-badge').innerText = "EMPTY";
+                slotEl.querySelector('.status-badge').className = "status-badge text-[9px] font-black uppercase text-red-500/50";
             }
-        }
-
+        });
+        lucide.createIcons();
+    } catch(e) {
+        console.error("Referral Load Error:", e);
+    }
+}
         window.addEventListener('load', initReferralPage);
     </script>
 </body>
