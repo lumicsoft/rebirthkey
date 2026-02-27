@@ -108,44 +108,48 @@
             loadMatrixHistory();
         }
 
-      async function loadMatrixHistory() {
+    async function loadMatrixHistory() {
     const pkgId = document.getElementById('pkg-selector').value;
     const grid = document.getElementById('history-grid');
     
+    // Loading State
     grid.innerHTML = `
         <div class="col-span-full text-center py-20 opacity-50">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
-            <p class="orbitron text-xs text-yellow-500">Scanning Blockchain Data...</p>
+            <p class="orbitron text-xs text-yellow-500">Syncing Matrix Data...</p>
         </div>`;
     lucide.createIcons();
 
     try {
+        // Data fetch call from web3-handler.js
         const history = await window.getAllMatrixHistory(myAddress, pkgId);
+        
+        console.log("Debug: Received History Data", history);
+
         grid.innerHTML = "";
 
         if(!history || history.length === 0) {
-            grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
-                <p class="text-gray-500 orbitron text-xs uppercase">No Records Found</p>
-            </div>`;
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                    <p class="text-gray-500 orbitron text-xs uppercase tracking-widest">No Rebirth History Found</p>
+                </div>`;
             return;
         }
 
-        // Loop: Newest to Oldest (i=0 is oldest rebirth, i=length-1 is latest)
+        // Loop: Newest First
         for(let i = history.length - 1; i >= 0; i--) {
             const node = history[i];
 
-            // Mapping from Array or Object
-            const idx = node[0] !== undefined ? node[0] : (node.index || 0);
-            const count = node[1] !== undefined ? node[1] : (node.filledCount || 0);
-            const sA = node[2] || node.slotA || "0x0000000000000000000000000000000000000000";
-            const sB = node[3] || node.slotB || "0x0000000000000000000000000000000000000000";
-            const sC = node[4] || node.slotC || "0x0000000000000000000000000000000000000000";
+            // --- Robust Data Mapping ---
+            // Hum .toString() use kar rahe hain taaki BigNumber error na aaye
+            const idx = node[0] ? node[0].toString() : "0";
+            const count = node[1] ? node[1].toString() : "0";
+            const sA = node[2] || "0x0000000000000000000000000000000000000000";
+            const sB = node[3] || "0x0000000000000000000000000000000000000000";
+            const sC = node[4] || "0x0000000000000000000000000000000000000000";
 
-            // LOGIC FIX: Check if this node is incomplete (Active) or finished
             const isComplete = parseInt(count) >= 3;
-            // Agar ye latest node hai aur 3 se kam bhare hain, toh ye Current Active hai
             const isActuallyActive = (i === history.length - 1) && !isComplete;
-            
             const displayIdx = parseInt(idx) + 1;
 
             const card = document.createElement('div');
@@ -190,8 +194,23 @@
         lucide.createIcons();
     } catch(e) {
         console.error("Critical History Error:", e);
-        grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Sync Error: ${e.message}</p>`;
+        grid.innerHTML = `<p class="text-red-500 text-center col-span-full py-10">Data Rendering Error. Check Console.</p>`;
     }
+}
+
+function renderSlot(label, addr) {
+    const isFilled = addr && addr !== "0x0000000000000000000000000000000000000000";
+    return `
+        <div class="flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${isFilled ? 'border-yellow-500/20' : 'border-white/5'}">
+            <div class="slot-circle ${isFilled ? 'slot-filled' : ''}"></div>
+            <div class="flex-grow">
+                <p class="text-[8px] text-gray-500 font-black uppercase">${label}</p>
+                <p class="text-[10px] font-mono ${isFilled ? 'text-yellow-500' : 'text-gray-700'}">
+                    ${isFilled ? addr.substring(0,10)+"..."+addr.substring(32) : 'Awaiting Spillover...'}
+                </p>
+            </div>
+        </div>
+    `;
 }
         function renderSlot(label, addr) {
             const isFilled = addr !== "0x0000000000000000000000000000000000000000";
