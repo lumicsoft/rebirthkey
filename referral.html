@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Matrix | RebirthKey</title>
+    <title>Matrix History | RebirthKey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -25,36 +25,45 @@
             border-radius: 24px;
         }
 
-        .matrix-node {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1.5px solid rgba(255, 215, 0, 0.1);
-            background: rgba(0, 0, 0, 0.4);
+        .matrix-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 215, 0, 0.1);
             border-radius: 20px;
+            transition: transform 0.3s ease;
         }
-        .filled-node {
+
+        .matrix-card:hover {
             border-color: var(--gold);
-            background: rgba(255, 215, 0, 0.08);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+            background: rgba(255, 215, 0, 0.05);
+            transform: translateY(-5px);
         }
-        .slot-id { font-size: 9px; color: #666; font-weight: 800; margin-bottom: 5px; }
+
+        .slot-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #222;
+        }
+        .slot-filled {
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+        }
     </style>
 </head>
 <body class="pb-24">
-
-    <script src="components.js"></script>
 
     <main class="max-w-6xl mx-auto px-4 pt-10">
         
         <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
             <div>
-                <h3 class="orbitron font-black text-2xl text-white border-l-4 border-yellow-500 pl-4 uppercase">Global <span class="text-yellow-500">Rebirth</span></h3>
-                <p class="text-[10px] text-gray-500 font-bold ml-5 mt-1 tracking-widest uppercase">3x1 Matrix Slot Status</p>
+                <h3 class="orbitron font-black text-2xl text-white border-l-4 border-yellow-500 pl-4 uppercase">Matrix <span class="text-yellow-500">History</span></h3>
+                <p class="text-[10px] text-gray-500 font-bold ml-5 mt-1 tracking-widest uppercase">All Rebirth Node Status</p>
             </div>
             
             <div class="flex gap-4 w-full md:w-auto">
                 <div class="flex-grow md:w-48">
                     <p class="text-[9px] text-gray-500 uppercase font-black mb-2">Select Package</p>
-                    <select id="pkg-selector" onchange="loadMatrix()" class="w-full bg-black border border-yellow-500/30 text-yellow-500 text-xs p-2 rounded-lg outline-none">
+                    <select id="pkg-selector" onchange="loadMatrixHistory()" class="w-full bg-black border border-yellow-500/30 text-yellow-500 text-xs p-2 rounded-lg outline-none">
                         <option value="0">Package $5</option>
                         <option value="1">Package $44</option>
                         <option value="2">Package $65</option>
@@ -65,76 +74,13 @@
                         <option value="7">Package $1310</option>
                     </select>
                 </div>
-                <div class="gold-border-fixed px-6 py-2 flex flex-col justify-center text-center min-w-[120px]">
-                    <p class="text-[8px] text-gray-500 uppercase font-black">Rebirth Count</p>
-                    <span id="reentry-display" class="orbitron text-lg font-black text-yellow-500">0</span>
-                </div>
             </div>
         </div>
 
-        <div class="gold-border-fixed p-8 md:p-16 mb-12 relative overflow-hidden">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-yellow-500/5 blur-[100px] -z-10"></div>
-
-            <div class="flex flex-col items-center gap-16">
-                
-                <div class="relative">
-                    <div class="gold-border-fixed w-32 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center border-2 bg-yellow-500/5 relative z-10">
-                        <div class="absolute -top-3 bg-yellow-500 text-black text-[8px] font-black px-3 py-1 rounded-full orbitron">CURRENT INDEX: <span id="current-idx">0</span></div>
-                        <i data-lucide="shield-check" class="w-10 h-10 text-yellow-500 mb-2"></i>
-                        <span class="orbitron text-[10px] font-bold text-white">YOUR NODE</span>
-                        <p id="user-addr-display" class="text-[8px] font-mono text-gray-500 mt-1 italic">Scanning...</p>
-                    </div>
-                    <div class="absolute top-full left-1/2 w-[2px] h-16 bg-gradient-to-b from-yellow-500/40 to-transparent -translate-x-1/2"></div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 md:gap-16 w-full max-w-4xl">
-                    
-                    <div id="slot-0" class="matrix-node p-6 flex flex-col items-center justify-center min-h-[140px]">
-                        <span class="slot-id orbitron">SLOT A</span>
-                        <div class="icon-container mb-3">
-                            <i data-lucide="circle-dashed" class="w-8 h-8 text-gray-800"></i>
-                        </div>
-                        <p class="addr-text text-[8px] font-mono text-gray-600 mb-2">0x00...000</p>
-                        <span class="status-badge text-[9px] font-black uppercase text-red-500/50">Empty</span>
-                    </div>
-
-                    <div id="slot-1" class="matrix-node p-6 flex flex-col items-center justify-center min-h-[140px]">
-                        <span class="slot-id orbitron">SLOT B</span>
-                        <div class="icon-container mb-3">
-                            <i data-lucide="circle-dashed" class="w-8 h-8 text-gray-800"></i>
-                        </div>
-                        <p class="addr-text text-[8px] font-mono text-gray-600 mb-2">0x00...000</p>
-                        <span class="status-badge text-[9px] font-black uppercase text-red-500/50">Empty</span>
-                    </div>
-
-                    <div id="slot-2" class="matrix-node p-6 flex flex-col items-center justify-center min-h-[140px]">
-                        <span class="slot-id orbitron">SLOT C</span>
-                        <div class="icon-container mb-3">
-                            <i data-lucide="circle-dashed" class="w-8 h-8 text-gray-800"></i>
-                        </div>
-                        <p class="addr-text text-[8px] font-mono text-gray-600 mb-2">0x00...000</p>
-                        <span class="status-badge text-[9px] font-black uppercase text-red-500/50">Empty</span>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="gold-border-fixed p-6 flex items-start gap-4">
-                <i data-lucide="help-circle" class="text-yellow-500 w-6 h-6 shrink-0"></i>
-                <div>
-                    <h4 class="orbitron text-xs font-black text-white mb-2 uppercase">How Rebirth Works?</h4>
-                    <p class="text-[11px] text-gray-400 leading-relaxed">Har package ka alag global matrix chalta hai. Jaise hi aapke niche 3 slots (A, B, C) bharte hain, aapka node automate rebirth hokar queue mein sabse niche lag jata hai.</p>
-                </div>
-            </div>
-            <div class="gold-border-fixed p-6 flex items-start gap-4">
-                <i data-lucide="info" class="text-cyan-400 w-6 h-6 shrink-0"></i>
-                <div>
-                    <h4 class="orbitron text-xs font-black text-white mb-2 uppercase">Real-time Sync</h4>
-                    <p class="text-[11px] text-gray-400 leading-relaxed">Ye tree aapke contract ke latest rebirth index ko dikha raha hai. Aap upar se package switch karke har tier ka status check kar sakte hain.</p>
-                </div>
+        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-20 opacity-50">
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4"></i>
+                <p class="orbitron text-xs">Fetching Matrix History...</p>
             </div>
         </div>
 
@@ -145,54 +91,88 @@
         lucide.createIcons();
         let myAddress = "";
 
-        async function initReferralPage() {
+        async function initPage() {
             if(!window.signer) {
-                setTimeout(initReferralPage, 1000);
+                setTimeout(initPage, 1000);
                 return;
             }
             myAddress = await window.signer.getAddress();
-            document.getElementById('user-addr-display').innerText = myAddress.substring(0,12)+"..."+myAddress.substring(30);
-            
-            loadMatrix();
+            loadMatrixHistory();
         }
 
-       async function loadMatrix() {
-    const pkgId = document.getElementById('pkg-selector').value;
-    try {
-        // ABI update hone ke baad ye function ab kaam karega
-        const data = await window.contract.getLatestMatrixNode(myAddress, pkgId);
-        
-        // Data extraction
-        const index = data.userMatrixIndex.toString();
-        const slots = [data.slotA, data.slotB, data.slotC];
-        
-        document.getElementById('current-idx').innerText = "#" + index;
+        async function loadMatrixHistory() {
+            const pkgId = document.getElementById('pkg-selector').value;
+            const grid = document.getElementById('history-grid');
+            
+            try {
+                // Calling your function getAllMatrixHistory
+                const history = await window.contract.getAllMatrixHistory(myAddress, pkgId);
+                grid.innerHTML = "";
 
-        // Rebirth count fetch
-        const reb = await window.contract.rebirthCount(myAddress, pkgId);
-        document.getElementById('reentry-display').innerText = reb.toString();
+                if(history.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                        <p class="text-gray-500 orbitron text-xs">No Matrix Records Found for this Package</p>
+                    </div>`;
+                    return;
+                }
 
-        // UI Update Loop
-        slots.forEach((addr, i) => {
-            const slotEl = document.getElementById(`slot-${i}`);
-            if(addr !== ethers.constants.AddressZero) {
-                slotEl.classList.add('filled-node');
-                slotEl.querySelector('.addr-text').innerText = addr.substring(0,6)+"..."+addr.substring(38);
-                slotEl.querySelector('.status-badge').innerText = "FILLED";
-                slotEl.querySelector('.status-badge').className = "status-badge text-[9px] font-black uppercase text-green-500";
-            } else {
-                slotEl.classList.remove('filled-node');
-                slotEl.querySelector('.addr-text').innerText = "0x00...000";
-                slotEl.querySelector('.status-badge').innerText = "EMPTY";
-                slotEl.querySelector('.status-badge').className = "status-badge text-[9px] font-black uppercase text-red-500/50";
+                // Reverse loop taaki naya rebirth upar dikhe
+                for(let i = history.length - 1; i >= 0; i--) {
+                    const node = history[i];
+                    const isFilled = (addr) => addr !== "0x0000000000000000000000000000000000000000";
+                    
+                    const card = document.createElement('div');
+                    card.className = "matrix-card p-6";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="text-[10px] text-yellow-500 font-black orbitron uppercase">Node Index</span>
+                                <h4 class="text-xl font-black orbitron">#${node.index}</h4>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Status</span>
+                                <p class="text-[10px] font-bold ${node.filledCount >= 3 ? 'text-green-500' : 'text-blue-400'}">
+                                    ${node.filledCount}/3 Slots Filled
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            ${renderSlot("Slot A", node.slotA)}
+                            ${renderSlot("Slot B", node.slotB)}
+                            ${renderSlot("Slot C", node.slotC)}
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+                            <span class="text-[9px] text-gray-600 font-bold uppercase italic">${i === history.length - 1 ? 'Current Active' : 'Completed Rebirth'}</span>
+                            <i data-lucide="${node.filledCount >= 3 ? 'check-circle-2' : 'clock'}" class="w-4 h-4 ${node.filledCount >= 3 ? 'text-green-500' : 'text-gray-700'}"></i>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+                lucide.createIcons();
+            } catch(e) {
+                console.error("History Load Error:", e);
+                grid.innerHTML = `<p class="text-red-500 text-center col-span-full">Error loading history. Make sure you are connected.</p>`;
             }
-        });
-        lucide.createIcons();
-    } catch(e) {
-        console.error("Referral Load Error:", e);
-    }
-}
-        window.addEventListener('load', initReferralPage);
+        }
+
+        function renderSlot(label, addr) {
+            const isFilled = addr !== "0x0000000000000000000000000000000000000000";
+            return `
+                <div class="flex items-center gap-3 bg-black/20 p-2 rounded-lg border border-white/5">
+                    <div class="slot-circle ${isFilled ? 'slot-filled' : ''}"></div>
+                    <div class="flex-grow">
+                        <p class="text-[8px] text-gray-500 font-black uppercase">${label}</p>
+                        <p class="text-[10px] font-mono ${isFilled ? 'text-white' : 'text-gray-700'}">
+                            ${isFilled ? addr.substring(0,10)+"..."+addr.substring(32) : 'Awaiting Spillover...'}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.addEventListener('load', initPage);
     </script>
 </body>
 </html>
