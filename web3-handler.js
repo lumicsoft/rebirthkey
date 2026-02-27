@@ -10,16 +10,19 @@ window.userData = {
 
 // --- NEW ABI FOR REBIRTHKEY CONTRACT ---
 const CONTRACT_ABI = [
+ 
     "function register(address _ref) external",
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
     "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss)",
     "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
+    "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
+    "function rebirthCount(address, uint256) view returns (uint256)",
     "function getUserTotalData(address _user) view returns (uint256[6] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
-    "function getUserActivePackages(address _user) view returns (bool[12])" // Package tracking ke liye
+    "function getUserActivePackages(address _user) view returns (bool[12])"
 ];
 
 const USDT_ABI = [
@@ -246,7 +249,14 @@ async function setupApp(address) {
         if (path.includes('index1')) {
             await fetchAllData(address);
         }
-
+// --- ADDED: REFERRAL/MATRIX PAGE PATH ---
+        if (path.includes('referral')) {
+            if (typeof initReferralPage === "function") {
+                await initReferralPage();
+            } else {
+                console.log("initReferralPage function not found on this page");
+            }
+        }
         // --- UPDATED: DEPOSITS PAGE PATH ---
         if (path.includes('deposits')) {
             // Agar deposits.html par initTeamPage() ya koi specific initialization hai
@@ -414,5 +424,6 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
