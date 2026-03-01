@@ -83,101 +83,108 @@
 
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
-    <script>
-        const INCOME_TYPES = {
-            1: { label: "Direct Referral", color: "bg-blue-500/20 text-blue-400" },
-            2: { label: "Level Matching", color: "bg-purple-500/20 text-purple-400" },
-            3: { label: "Single Leg", color: "bg-green-500/20 text-green-400" },
-            4: { label: "Matrix Rebirth", color: "bg-yellow-500/20 text-yellow-500" },
-            5: { label: "Daily Global", color: "bg-pink-500/20 text-pink-400" },
-            6: { label: "Reward Income", color: "bg-orange-500/20 text-orange-400" }
-        };
+   <script>
+    const INCOME_TYPES = {
+        1: { label: "Direct Referral", color: "bg-blue-500/20 text-blue-400" },
+        2: { label: "Level Matching", color: "bg-purple-500/20 text-purple-400" },
+        3: { label: "Single Leg", color: "bg-green-500/20 text-green-400" },
+        4: { label: "Matrix Rebirth", color: "bg-yellow-500/20 text-yellow-500" },
+        5: { label: "Daily Global", color: "bg-pink-500/20 text-pink-400" },
+        6: { label: "Reward Income", color: "bg-orange-500/20 text-orange-400" }
+    };
 
-        async function initPage() {
-            if(!window.signer) {
-                setTimeout(initPage, 1000);
+    async function initPage() {
+        // Wait for web3-handler to initialize signer and contract
+        let attempts = 0;
+        const checkInit = setInterval(() => {
+            if (window.contract && window.signer) {
+                clearInterval(checkInit);
+                loadIncomeHistory();
+            }
+            attempts++;
+            if (attempts > 10) clearInterval(checkInit); // Stop after 10s
+        }, 1000);
+    }
+
+    async function loadIncomeHistory() {
+        const tableBody = document.getElementById('income-table-body');
+        const noData = document.getElementById('no-data');
+        const totalVal = document.getElementById('total-val');
+        
+        try {
+            const userAddr = await window.signer.getAddress();
+            
+            // UI Loading State
+            tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-yellow-500 mb-2"></i>
+                <p class="text-xs orbitron text-yellow-500">Scanning Blockchain Logs...</p>
+            </td></tr>`;
+            lucide.createIcons();
+
+            // 1. Total Earnings fetch karein
+            const data = await window.contract.getUserTotalData(userAddr);
+            totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(data.stats[2])).toFixed(2)}`;
+
+            // 2. Events fetch karein (IncomeReceived)
+            // Note: web3-handler.js ki ABI mein ye event hona chahiye
+            const filter = window.contract.filters.IncomeReceived(userAddr);
+            const events = await window.contract.queryFilter(filter, -10000, 'latest'); 
+
+            if (!events || events.length === 0) {
+                tableBody.innerHTML = "";
+                noData.classList.remove('hidden');
                 return;
             }
-            loadIncomeHistory();
-        }
 
-      async function loadIncomeHistory() {
-    const tableBody = document.getElementById('income-table-body');
-    const noData = document.getElementById('no-data');
-    const userAddr = await window.signer.getAddress();
-    
-    // UI Reset
-    tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center">
-        <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-yellow-500 mb-2"></i>
-        <p class="text-xs orbitron text-yellow-500">Fetching Data from Contract...</p>
-    </td></tr>`;
-    lucide.createIcons();
+            noData.classList.add('hidden');
+            tableBody.innerHTML = "";
+            
+            // Latest income upar dikhane ke liye reverse
+            const sortedEvents = [...events].reverse();
 
-    try {
-        // 1. Total Stats fetch karein (getUserTotalData function jo aapke contract mein hai)
-        const data = await window.contract.getUserTotalData(userAddr);
-        document.getElementById('total-val').innerText = `$${ethers.utils.formatEther(data.stats[2])}`;
-
-        // 2. Income History fetch karne ka logic
-        // Note: Aapke contract mein incomeHistory fetch karne ka direct 'view' function nahi hai,
-        // isliye hum 'users' mapping ko index wise tab tak hit karenge jab tak data milna band na ho jaye.
-        
-        tableBody.innerHTML = "";
-        let found = false;
-        let i = 0;
-
-        // Hum ek loop chalayenge jab tak humein error na mil jaye (kyunki length nahi pata)
-        while (i < 50) { // Limit 50 tak rakhte hain safety ke liye
-            try {
-                // Aapka contract History struct return karta hai: {amount, incomeType, time}
-                const record = await window.contract.users(userAddr).incomeHistory(i); 
+            sortedEvents.forEach((event, index) => {
+                const { amount, incomeType } = event.args;
+                const type = INCOME_TYPES[incomeType.toNumber()] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
+                const amt = ethers.utils.formatEther(amount);
                 
-                if (!record || record.amount == 0) break;
-                
-                found = true;
-                const amt = ethers.utils.formatEther(record.amount);
-                const type = INCOME_TYPES[record.incomeType.toNumber()] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
-                const date = new Date(record.time.toNumber() * 1000).toLocaleString();
+                // Serial Number calculate karein
+                const sNo = sortedEvents.length - index;
 
                 const tr = document.createElement('tr');
                 tr.className = "income-row border-b border-white/5 transition-colors";
                 tr.innerHTML = `
-                    <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
+                    <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${sNo}</td>
                     <td class="px-6 py-5">
                         <span class="type-badge ${type.color}">${type.label}</span>
                     </td>
-                    <td class="px-6 py-5 font-bold text-white">
-                        ${parseFloat(amt).toFixed(2)} <span class="text-[10px] text-gray-500">USDT</span>
+                    <td class="px-6 py-5 font-bold text-white uppercase">
+                        ${parseFloat(amt).toFixed(2)} <span class="text-[10px] text-gray-500 ml-1">USDT</span>
                     </td>
-                    <td class="px-6 py-5 text-gray-400 text-xs">${date}</td>
-                    <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">
-                        <span class="flex items-center justify-end gap-1">
-                            <i data-lucide="check-circle" class="w-3 h-3"></i> SUCCESS
+                    <td class="px-6 py-5 text-gray-400 text-xs font-medium">
+                        Block: ${event.blockNumber}
+                    </td>
+                    <td class="px-6 py-5 text-right">
+                        <span class="text-green-500 font-bold text-[10px] flex items-center justify-end gap-1">
+                            <i data-lucide="check-circle" class="w-3 h-3"></i> CONFIRMED
                         </span>
                     </td>
                 `;
-                tableBody.prepend(tr); // Naya record upar dikhane ke liye
-                i++;
-            } catch (e) {
-                // Jab records khatam ho jayenge toh call error dega, tab loop break kar denge
-                break;
-            }
-        }
+                tableBody.appendChild(tr);
+            });
 
-        if(!found) {
-            noData.classList.remove('hidden');
-            tableBody.innerHTML = "";
-        } else {
-            noData.classList.add('hidden');
-        }
+            lucide.createIcons();
 
-        lucide.createIcons();
-    } catch (err) {
-        console.error("Income Load Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500 text-xs">Contract not responding. Check connection.</td></tr>`;
+        } catch (err) {
+            console.error("Critical Error:", err);
+            tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">
+                <i data-lucide="alert-triangle" class="w-6 h-6 mx-auto mb-2"></i>
+                Sync Error: Please check web3-handler ABI
+            </td></tr>`;
+            lucide.createIcons();
+        }
     }
-}
-        window.addEventListener('load', initPage);
-    </script>
+
+    window.addEventListener('load', initPage);
+</script>
 </body>
 </html>
