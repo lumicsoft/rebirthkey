@@ -305,7 +305,26 @@ window.showHistory = async function(type) {
         </div>
     `).join('');
 }
+// web3-handler.js mein add karein
 
+window.getIncomeHistory = async (userAddress) => {
+    try {
+        // Contract mein humne Mapping ya History return karne ka function nahi banaya hai 
+        // Par hum Events se bhi history nikal sakte hain (Better Performance)
+        
+        const filter = window.contract.filters.IncomeReceived(userAddress);
+        const events = await window.contract.queryFilter(filter);
+        
+        return events.map(e => ({
+            amount: e.args.amount,
+            incomeType: e.args.incomeType,
+            time: 0 // Events mein block timestamp nikalna slow hota hai, aap ise approx rakh sakte hain
+        }));
+    } catch (e) {
+        console.error("History fetch error:", e);
+        return [];
+    }
+}
 window.fetchBlockchainHistory = async function(type) {
     try {
         const activeSigner = window.signer || signer;
@@ -496,6 +515,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
