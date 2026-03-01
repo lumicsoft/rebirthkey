@@ -310,17 +310,24 @@ window.showHistory = async function(type) {
 
 window.getIncomeHistory = async (userAddress) => {
     try {
-        // Contract mein humne Mapping ya History return karne ka function nahi banaya hai 
-        // Par hum Events se bhi history nikal sakte hain (Better Performance)
+        const activeContract = window.contract || contract;
         
-        const filter = window.contract.filters.IncomeReceived(userAddress);
-        const events = await window.contract.queryFilter(filter);
+        // Blockchain se user ke specific 'IncomeReceived' events nikalna
+        const filter = activeContract.filters.IncomeReceived(userAddress);
         
-        return events.map(e => ({
+        // Pichle 10,000 blocks tak ka data (Aap ise badha bhi sakte hain)
+        const events = await activeContract.queryFilter(filter, -10000, 'latest');
+        
+        // Data ko readable format mein convert karna
+        const history = events.map(e => ({
             amount: e.args.amount,
-            incomeType: e.args.incomeType,
-            time: 0 // Events mein block timestamp nikalna slow hota hai, aap ise approx rakh sakte hain
+            incomeType: e.args.incomeType.toNumber(),
+            // BlockNumber ko hum ID ki tarah use kar sakte hain
+            id: e.blockNumber 
         }));
+
+        // Latest income sabse upar dikhane ke liye reverse karein
+        return history.reverse();
     } catch (e) {
         console.error("History fetch error:", e);
         return [];
@@ -516,6 +523,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
