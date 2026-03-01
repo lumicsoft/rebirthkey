@@ -19,6 +19,7 @@ const CONTRACT_ABI = [
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
     "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
     "function rebirthCount(address, uint256) view returns (uint256)",
+    "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time)[])",
     "function getUserTotalData(address _user) view returns (uint256[6] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
@@ -523,6 +524,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
