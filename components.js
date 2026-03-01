@@ -26,10 +26,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         <nav class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center relative z-50">
             <div class="flex items-center gap-2 cursor-pointer" onclick="location.href='index1.html'">
                 <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20">
-                    <i data-lucide="component" class="text-black w-6 h-6"></i>
+                    <i data-lucide="key-round" class="text-black w-6 h-6"></i>
                 </div>
                 <span class="text-xl font-black orbitron tracking-tighter uppercase">
-                    Earn <span class="text-gradient">BNB</span>
+                    Rebirth<span class="text-gradient">Key</span>
                 </span>
             </div>
             
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('deposits.html') ? 'bg-yellow-500/10' : ''}">
                         <i data-lucide="gem" class="w-5 h-5"></i>
                     </div>
-                    <span class="text-[9px] font-bold orbitron">position</span>
+                    <span class="text-[9px] font-bold orbitron">POSITION</span>
                 </a>
                 <a href="referral.html" class="flex flex-col items-center gap-1 transition-all ${window.location.pathname.includes('referral.html') ? 'text-yellow-500 scale-110' : 'text-gray-400'}">
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('referral.html') ? 'bg-yellow-500/10' : ''}">
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('history.html') ? 'bg-yellow-500/10' : ''}">
                         <i data-lucide="history" class="w-5 h-5"></i>
                     </div>
-                    <span class="text-[9px] font-bold orbitron">Transection</span>
+                    <span class="text-[9px] font-bold orbitron">HISTORY</span>
                 </a>
             </div>
         </div>
@@ -99,8 +99,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 6. Inject Luxury Footer
     const footerHTML = `
         <footer class="p-20 text-center border-t border-white/5 relative z-10 mb-20 md:mb-0">
-            <p class="orbitron font-bold text-2xl mb-4 italic">Earn <span class="text-gradient uppercase">BNB</span></p>
-            <p class="text-gray-600 text-[10px] tracking-[1em] uppercase">Decentralized Finance © 2026</p>
+            <p class="orbitron font-bold text-2xl mb-4 italic">Rebirth<span class="text-gradient uppercase">Key</span></p>
+            <p class="text-gray-600 text-[10px] tracking-[1em] uppercase">Decentralized ecosystem © 2026</p>
         </footer>
     `;
     
@@ -114,4 +114,3 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Initialize Lucide Icons
     if (typeof lucide !== 'undefined') lucide.createIcons();
 });
-
