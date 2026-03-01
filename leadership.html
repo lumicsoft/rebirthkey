@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Team | RebirthKey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --gold: #ffd700; --bg-dark: #060a08; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-dark); color: white; 
+            background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 80%);
+            min-height: 100vh;
+        }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+        }
+        select option { background: #060a08; color: white; }
+    </style>
+</head>
+<body class="pb-24">
+
+    <div id="header-placeholder"></div>
+
+    <main class="max-w-6xl mx-auto px-4 pt-10">
+        <div class="mb-10">
+            <h3 class="orbitron font-black text-2xl text-white border-l-4 border-yellow-500 pl-4 uppercase">
+                My <span class="text-yellow-500">Network Statistics</span>
+            </h3>
+            <p class="text-[10px] text-gray-500 font-bold ml-5 mt-1 tracking-widest uppercase">Live Downline Analysis</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="glass-card p-6 border-l-4 border-blue-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Direct Team</p>
+                        <h2 id="direct-count" class="orbitron text-3xl font-black text-white">0</h2>
+                    </div>
+                    <div class="bg-blue-500/10 p-3 rounded-xl text-blue-500">
+                        <i data-lucide="user-plus" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 border-l-4 border-yellow-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Total Team Size</p>
+                        <h2 id="total-team-count" class="orbitron text-3xl font-black text-yellow-500">0</h2>
+                    </div>
+                    <div class="bg-yellow-500/10 p-3 rounded-xl text-yellow-500">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 border-l-4 border-purple-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Selected Level</p>
+                        <h2 id="total-members" class="orbitron text-3xl font-black text-purple-500">0</h2>
+                    </div>
+                    <div class="bg-purple-500/10 p-3 rounded-xl text-purple-500">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-6">
+            <p class="orbitron text-xs font-bold text-gray-400 uppercase tracking-tighter">Level-wise Member List</p>
+            <div class="w-full md:w-64">
+                <div class="relative">
+                    <select id="level-selector" onchange="fetchLevelData()" class="w-full bg-black/50 border border-yellow-500/30 text-yellow-500 text-sm p-3 rounded-xl outline-none appearance-none cursor-pointer focus:border-yellow-500">
+                        <script>
+                            for(let i=1; i<=12; i++) {
+                                document.write(`<option value="${i}">Show Level ${i}</option>`);
+                            }
+                        </script>
+                    </select>
+                    <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-yellow-500 pointer-events-none"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="text-[10px] text-gray-500 uppercase font-black border-b border-white/5 bg-white/5">
+                        <tr>
+                            <th class="px-6 py-4">User Address</th>
+                            <th class="px-6 py-4">Reg. Date</th>
+                            <th class="px-6 py-4">Current Package</th>
+                            <th class="px-6 py-4 text-right">Total Earned</th>
+                        </tr>
+                    </thead>
+                    <tbody id="team-table-body" class="text-sm"></tbody>
+                </table>
+            </div>
+            
+            <div id="status-container" class="hidden py-20 text-center">
+                <div id="loader" class="hidden">
+                    <i data-lucide="refresh-cw" class="w-10 h-10 animate-spin mx-auto text-yellow-500 mb-4"></i>
+                    <p class="orbitron text-xs text-yellow-500 uppercase">Scanning Level Network...</p>
+                </div>
+                <div id="no-data" class="hidden text-gray-500">
+                    <i data-lucide="users" class="w-12 h-12 mx-auto mb-4 opacity-20"></i>
+                    <p class="orbitron text-xs uppercase">No members found at this level</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="components.js"></script>
+    <script src="web3-handler.js"></script>
+    <script>
+        async function initPage() {
+            if(!window.signer) {
+                setTimeout(initPage, 1000);
+                return;
+            }
+            lucide.createIcons();
+            await loadGlobalStats(); // Fetch Direct and Total counts first
+            fetchLevelData();       // Then load Level 1 table
+        }
+
+        async function loadGlobalStats() {
+            try {
+                const userAddr = await window.signer.getAddress();
+                const data = await window.contract.getUserTotalData(userAddr);
+                
+                // Set Direct Count (from contract stats index 4)
+                document.getElementById('direct-count').innerText = data.stats[4].toString();
+
+                // Calculate Total Team Size (Loop through all 12 levels)
+                let totalTeamSize = 0;
+                for(let i=1; i<=12; i++) {
+                    const levelTeam = await window.contract.getLevelTeamDetail(userAddr, i);
+                    totalTeamSize += levelTeam.length;
+                }
+                document.getElementById('total-team-count').innerText = totalTeamSize;
+
+            } catch (err) {
+                console.error("Global Stats Error:", err);
+            }
+        }
+
+        async function fetchLevelData() {
+            const level = document.getElementById('level-selector').value;
+            const tableBody = document.getElementById('team-table-body');
+            const statusContainer = document.getElementById('status-container');
+            const loader = document.getElementById('loader');
+            const noData = document.getElementById('no-data');
+            const totalMembersText = document.getElementById('total-members');
+
+            tableBody.innerHTML = "";
+            statusContainer.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            noData.classList.add('hidden');
+            totalMembersText.innerText = "...";
+
+            try {
+                const userAddr = await window.signer.getAddress();
+                const team = await window.contract.getLevelTeamDetail(userAddr, level);
+                
+                loader.classList.add('hidden');
+                totalMembersText.innerText = team.length;
+
+                if(team.length === 0) {
+                    noData.classList.remove('hidden');
+                    return;
+                }
+
+                statusContainer.classList.add('hidden');
+                team.forEach(member => {
+                    const date = new Date(member.registrationTime * 1000).toLocaleDateString();
+                    const earned = ethers.utils.formatEther(member.totalEarned);
+                    const pkgPrice = ["$5", "$44", "$65", "$106", "$187", "$348", "$669", "$1310", "$2591", "$5152", "$10273", "$20514"];
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-white/5 hover:bg-white/5 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-mono text-yellow-500/80">
+                            ${member.userAddress.substring(0,6)}...${member.userAddress.substring(38)}
+                            <button onclick="navigator.clipboard.writeText('${member.userAddress}')" class="ml-2 opacity-50 hover:opacity-100">
+                                <i data-lucide="copy" class="w-3 h-3"></i>
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 text-gray-400 text-xs">${date}</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-[10px] font-bold border border-yellow-500/20">
+                                ${pkgPrice[member.currentPackageId] || '$0'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-white uppercase">
+                            ${parseFloat(earned).toFixed(2)} <span class="text-[9px] text-gray-500">USDT</span>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                loader.classList.add('hidden');
+                statusContainer.classList.remove('hidden');
+                noData.innerHTML = `<p class="text-red-500 text-xs">Error loading level data</p>`;
+            }
+        }
+
+        window.addEventListener('load', initPage);
+    </script>
+</body>
+</html>
