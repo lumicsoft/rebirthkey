@@ -107,82 +107,57 @@
     }
 
     async function loadIncomeHistory() {
-        const tableBody = document.getElementById('income-table-body');
-        const noData = document.getElementById('no-data');
-        const totalVal = document.getElementById('total-val');
+    const tableBody = document.getElementById('income-table-body');
+    const noData = document.getElementById('no-data');
+    const totalVal = document.getElementById('total-val');
+    
+    try {
+        const userAddr = await window.signer.getAddress();
         
-        try {
-            const userAddr = await window.signer.getAddress();
-            
-            // UI Loading State
-            tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center">
-                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-yellow-500 mb-2"></i>
-                <p class="text-xs orbitron text-yellow-500">Scanning Blockchain Logs...</p>
-            </td></tr>`;
-            lucide.createIcons();
+        // UI Loading
+        tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center text-yellow-500">Loading Data...</td></tr>`;
 
-            // 1. Total Earnings fetch karein
-            const data = await window.contract.getUserTotalData(userAddr);
-            totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(data.stats[2])).toFixed(2)}`;
+        // 1. Stats Update (Total Earnings)
+        const data = await window.contract.getUserTotalData(userAddr);
+        totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(data.stats[2])).toFixed(2)}`;
 
-            // 2. Events fetch karein (IncomeReceived)
-            // Note: web3-handler.js ki ABI mein ye event hona chahiye
-            const filter = window.contract.filters.IncomeReceived(userAddr);
-            const events = await window.contract.queryFilter(filter, -10000, 'latest'); 
+        // 2. Direct Array Fetch (Naya Function)
+        const history = await window.contract.getUserIncomeHistory(userAddr);
 
-            if (!events || events.length === 0) {
-                tableBody.innerHTML = "";
-                noData.classList.remove('hidden');
-                return;
-            }
-
-            noData.classList.add('hidden');
+        if (!history || history.length === 0) {
             tableBody.innerHTML = "";
-            
-            // Latest income upar dikhane ke liye reverse
-            const sortedEvents = [...events].reverse();
-
-            sortedEvents.forEach((event, index) => {
-                const { amount, incomeType } = event.args;
-                const type = INCOME_TYPES[incomeType.toNumber()] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
-                const amt = ethers.utils.formatEther(amount);
-                
-                // Serial Number calculate karein
-                const sNo = sortedEvents.length - index;
-
-                const tr = document.createElement('tr');
-                tr.className = "income-row border-b border-white/5 transition-colors";
-                tr.innerHTML = `
-                    <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${sNo}</td>
-                    <td class="px-6 py-5">
-                        <span class="type-badge ${type.color}">${type.label}</span>
-                    </td>
-                    <td class="px-6 py-5 font-bold text-white uppercase">
-                        ${parseFloat(amt).toFixed(2)} <span class="text-[10px] text-gray-500 ml-1">USDT</span>
-                    </td>
-                    <td class="px-6 py-5 text-gray-400 text-xs font-medium">
-                        Block: ${event.blockNumber}
-                    </td>
-                    <td class="px-6 py-5 text-right">
-                        <span class="text-green-500 font-bold text-[10px] flex items-center justify-end gap-1">
-                            <i data-lucide="check-circle" class="w-3 h-3"></i> CONFIRMED
-                        </span>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-
-            lucide.createIcons();
-
-        } catch (err) {
-            console.error("Critical Error:", err);
-            tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">
-                <i data-lucide="alert-triangle" class="w-6 h-6 mx-auto mb-2"></i>
-                Sync Error: Please check web3-handler ABI
-            </td></tr>`;
-            lucide.createIcons();
+            noData.classList.remove('hidden');
+            return;
         }
+
+        noData.classList.add('hidden');
+        tableBody.innerHTML = "";
+        
+        // Reverse loop taaki latest income top par dikhe
+        for (let i = history.length - 1; i >= 0; i--) {
+            const record = history[i];
+            const amt = ethers.utils.formatEther(record.amount);
+            const type = INCOME_TYPES[record.incomeType.toNumber()] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
+            const date = new Date(record.time.toNumber() * 1000).toLocaleString();
+
+            const tr = document.createElement('tr');
+            tr.className = "income-row border-b border-white/5 transition-colors";
+            tr.innerHTML = `
+                <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
+                <td class="px-6 py-5"><span class="type-badge ${type.color}">${type.label}</span></td>
+                <td class="px-6 py-5 font-bold text-white">${parseFloat(amt).toFixed(2)} USDT</td>
+                <td class="px-6 py-5 text-gray-400 text-xs">${date}</td>
+                <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
+            `;
+            tableBody.appendChild(tr);
+        }
+        lucide.createIcons();
+
+    } catch (err) {
+        console.error("Report Error:", err);
+        tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500">Error: Contract Function not found. Did you redeploy?</td></tr>`;
     }
+}
 
     window.addEventListener('load', initPage);
 </script>
