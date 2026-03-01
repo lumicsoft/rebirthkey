@@ -22,6 +22,7 @@ const CONTRACT_ABI = [
     "function getUserTotalData(address _user) view returns (uint256[6] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
+    "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
     "function getUserActivePackages(address _user) view returns (bool[12])"
 ];
 
@@ -515,6 +516,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
