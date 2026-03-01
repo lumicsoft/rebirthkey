@@ -156,66 +156,82 @@
         }
 
         async function fetchLevelData() {
-            const level = document.getElementById('level-selector').value;
-            const tableBody = document.getElementById('team-table-body');
-            const statusContainer = document.getElementById('status-container');
-            const loader = document.getElementById('loader');
-            const noData = document.getElementById('no-data');
-            const totalMembersText = document.getElementById('total-members');
+    const level = document.getElementById('level-selector').value;
+    const tableBody = document.getElementById('team-table-body');
+    const statusContainer = document.getElementById('status-container');
+    const loader = document.getElementById('loader');
+    const noData = document.getElementById('no-data');
+    const totalMembersText = document.getElementById('total-members');
 
-            tableBody.innerHTML = "";
-            statusContainer.classList.remove('hidden');
-            loader.classList.remove('hidden');
-            noData.classList.add('hidden');
-            totalMembersText.innerText = "...";
+    // UI Reset
+    tableBody.innerHTML = "";
+    statusContainer.classList.remove('hidden');
+    loader.classList.remove('hidden');
+    noData.classList.add('hidden');
+    totalMembersText.innerText = "...";
 
-            try {
-                const userAddr = await window.signer.getAddress();
-                const team = await window.contract.getLevelTeamDetail(userAddr, level);
-                
-                loader.classList.add('hidden');
-                totalMembersText.innerText = team.length;
+    try {
+        const userAddr = await window.signer.getAddress();
+        
+        // Contract function call (Matches your provided Solidity code)
+        const team = await window.contract.getLevelTeamDetail(userAddr, level);
+        
+        loader.classList.add('hidden');
+        totalMembersText.innerText = team.length;
 
-                if(team.length === 0) {
-                    noData.classList.remove('hidden');
-                    return;
-                }
-
-                statusContainer.classList.add('hidden');
-                team.forEach(member => {
-                    const date = new Date(member.registrationTime * 1000).toLocaleDateString();
-                    const earned = ethers.utils.formatEther(member.totalEarned);
-                    const pkgPrice = ["$5", "$44", "$65", "$106", "$187", "$348", "$669", "$1310", "$2591", "$5152", "$10273", "$20514"];
-                    
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b border-white/5 hover:bg-white/5 transition-colors";
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 font-mono text-yellow-500/80">
-                            ${member.userAddress.substring(0,6)}...${member.userAddress.substring(38)}
-                            <button onclick="navigator.clipboard.writeText('${member.userAddress}')" class="ml-2 opacity-50 hover:opacity-100">
-                                <i data-lucide="copy" class="w-3 h-3"></i>
-                            </button>
-                        </td>
-                        <td class="px-6 py-4 text-gray-400 text-xs">${date}</td>
-                        <td class="px-6 py-4">
-                            <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-[10px] font-bold border border-yellow-500/20">
-                                ${pkgPrice[member.currentPackageId] || '$0'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right font-bold text-white uppercase">
-                            ${parseFloat(earned).toFixed(2)} <span class="text-[9px] text-gray-500">USDT</span>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-                lucide.createIcons();
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                loader.classList.add('hidden');
-                statusContainer.classList.remove('hidden');
-                noData.innerHTML = `<p class="text-red-500 text-xs">Error loading level data</p>`;
-            }
+        if(!team || team.length === 0) {
+            noData.classList.remove('hidden');
+            return;
         }
+
+        statusContainer.classList.add('hidden');
+        
+        // Package prices according to your _initPackages() logic
+        const pkgPrice = ["$5", "$44", "$65", "$106", "$187", "$348", "$669", "$1310", "$2591", "$5152", "$10273", "$20514"];
+
+        team.forEach(member => {
+            // Correct BigNumber conversions
+            const regTimestamp = member.registrationTime.toNumber ? member.registrationTime.toNumber() : member.registrationTime;
+            const date = new Date(regTimestamp * 1000).toLocaleDateString();
+            
+            const earned = ethers.utils.formatEther(member.totalEarned);
+            
+            // Getting the actual index from BigNumber
+            const pkgIdx = member.currentPackageId.toNumber ? member.currentPackageId.toNumber() : member.currentPackageId;
+
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-white/5 hover:bg-white/5 transition-colors income-row";
+            tr.innerHTML = `
+                <td class="px-6 py-4 font-mono text-yellow-500/80">
+                    ${member.userAddress.substring(0,6)}...${member.userAddress.substring(38)}
+                    <button onclick="navigator.clipboard.writeText('${member.userAddress}')" class="ml-2 opacity-50 hover:opacity-100">
+                        <i data-lucide="copy" class="w-3 h-3"></i>
+                    </button>
+                </td>
+                <td class="px-6 py-4 text-gray-400 text-xs">${date}</td>
+                <td class="px-6 py-4">
+                    <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-[10px] font-bold border border-yellow-500/20">
+                        ${pkgPrice[pkgIdx] || '$0'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-right font-bold text-white">
+                    ${parseFloat(earned).toFixed(2)} <span class="text-[9px] text-gray-500">USDT</span>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+        
+        // Re-initialize icons for the new rows
+        lucide.createIcons();
+
+    } catch (err) {
+        console.error("Fetch Level Error:", err);
+        loader.classList.add('hidden');
+        statusContainer.classList.remove('hidden');
+        noData.classList.remove('hidden');
+        noData.innerHTML = `<p class="text-red-500 text-xs font-bold uppercase">RPC Sync Error: Please try again</p>`;
+    }
+}
 
         window.addEventListener('load', initPage);
     </script>
