@@ -483,10 +483,10 @@ async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
         
-        // 1. Basic Stats Fetch
+        // 1. Basic Stats Fetch (ID, Balance, Incomes)
         const data = await activeContract.getUserTotalData(address);
         
-        // UI Updates (ID, Balance, Incomes)
+        // UI Updates
         updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         updateText('balance-large', format(data.stats[1])); 
@@ -494,62 +494,64 @@ async function fetchAllData(address) {
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
         
+        // Incomes
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
-        
-        // Dashboard specific funds (Booster/Lunar)
-        updateText('booster-fund', format(data.incomes[4])); 
-        updateText('lunar-fund', format(data.incomes[2]));
 
         // Referral URL
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // --- THE CRITICAL FIX START ---
+        // --- KHUD KA PACKAGE DHUNDHNE KA ASLI LOGIC ---
+        let maxActive = -1;
+        
         try {
-            // Contract call to get active status of all 12 packages
-            const activeStatus = await activeContract.getUserActivePackages(address);
-            console.log("Blockchain Array Received:", activeStatus);
-
-            let maxActive = -1;
+            console.log("Checking your active packages...");
             
-            // Loop through the 12 packages
-            for(let i = 0; i < 12; i++) {
-                // Kuch cases mein activeStatus direct array nahi hota, isliye check zaroori hai
-                if(activeStatus && activeStatus[i] === true) {
-                    maxActive = i; 
+            // Loop 0 se 11 (G0 to G11)
+            for (let i = 0; i < 12; i++) {
+                // Aapke contract mein User struct ke andar activePackages mapping hai
+                // Use access karne ka sahi tarika ye hai:
+                const isActive = await activeContract.users(address).then(u => activeContract.activePackages(address, i));
+                
+                if (isActive === true) {
+                    maxActive = i; // Agar true hai toh ye aapka level hai
+                } else {
+                    // Agar koi false mil gaya, matlab uske aage ke buy nahi kiye
+                    break; 
                 }
             }
 
-            // Sync with Global Object
+            console.log("Aapka Current Package Level:", maxActive);
+            
+            // Dashboard ko batana ki kaunsa package active hai
             window.userData.currentPackageId = maxActive;
-            console.log("Final Active Level Identified:", maxActive);
 
-            // 1. Update UI Grid Immediately
+            // 1. Cards ko Active/Unlock dikhane ke liye
             if (typeof renderPackages === "function") {
                 renderPackages(maxActive);
             }
 
-            // 2. Update Header Rank (Agar Dashboard par header hai)
+            // 2. Dashboard Header mein G0, G1 etc dikhane ke liye
             const rankHeader = document.getElementById('current-rank-header');
             if(rankHeader) {
                 rankHeader.innerText = maxActive >= 0 ? "G" + maxActive : "No Rank";
             }
 
         } catch (pkgErr) {
-            console.error("Package detection failed:", pkgErr);
-            // Fallback: Agar matrix income hai toh kam se kam G0 active hai
-            if (parseFloat(format(data.incomes[3])) > 0) {
+            console.error("Mapping Check Error:", pkgErr);
+            // Fallback: Agar stats mein balance ya income hai toh G0 toh hoga hi
+            if (data.stats[0] > 0) { 
+                maxActive = 0;
                 window.userData.currentPackageId = 0;
                 if (typeof renderPackages === "function") renderPackages(0);
             }
         }
-        // --- THE CRITICAL FIX END ---
 
     } catch (e) { 
         console.error("Fetch Data Global Error:", e); 
@@ -579,6 +581,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
