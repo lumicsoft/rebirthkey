@@ -18,66 +18,68 @@
         }
         .orbitron { font-family: 'Orbitron', sans-serif; }
         
-        /* New Elite Card Design */
+        /* Dashboard Cards Fix */
+        .gold-border-fixed {
+            background: #000000; border: 1.5px solid var(--gold);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.15); border-radius: 20px;
+        }
+
+        /* NEW ELITE PACKAGE CARD */
         .package-card {
             background: linear-gradient(180deg, rgba(255,215,0,0.05) 0%, rgba(0,0,0,1) 100%);
             border: 1px solid rgba(255, 215, 0, 0.3);
             border-radius: 24px;
             padding: 30px 20px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
+            transition: 0.4s;
             position: relative;
-            overflow: hidden;
         }
         .package-card.active-card {
-            border: 1px solid var(--gold);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.15);
+            border: 1.5px solid var(--gold);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
         }
-        .package-card::before {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.1), transparent);
-            transition: 0.5s;
+        .price-display {
+            font-size: 2.8rem; font-weight: 900; color: white;
+            font-family: 'Orbitron', sans-serif; margin-bottom: 20px;
         }
-        .package-card:hover::before { left: 100%; }
-
-        .price-text {
-            font-size: 2.5rem; font-weight: 900; color: white;
-            text-shadow: 0 0 15px rgba(255,255,255,0.2);
-            margin-bottom: 1.5rem;
-        }
-
-        .btn-buy {
+        .btn-main {
             background: linear-gradient(135deg, #ffd700, #b8860b);
             color: black; font-weight: 900; border-radius: 12px;
             text-transform: uppercase; width: 100%; padding: 12px;
-            box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
-            transition: 0.3s; margin-bottom: 20px;
+            margin-bottom: 20px; transition: 0.3s;
         }
-        .btn-rebuy {
+        .btn-rebuy-style {
             background: transparent; border: 1.5px solid var(--gold);
             color: var(--gold); font-weight: 900; border-radius: 12px;
             text-transform: uppercase; width: 100%; padding: 12px;
-            transition: 0.3s; margin-bottom: 20px;
+            margin-bottom: 20px; transition: 0.3s;
         }
-        .btn-rebuy:hover { background: var(--gold); color: black; }
+        .btn-rebuy-style:hover { background: var(--gold); color: black; }
 
-        .info-line {
+        .meta-line {
             display: flex; justify-content: space-between;
-            padding: 8px 0; border-top: 1px solid rgba(255,215,0,0.1);
-            font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            padding: 10px 0; border-top: 1px solid rgba(255,215,0,0.1);
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
         }
+        .status-active { color: #22c55e; }
+        .status-inactive { color: #ef4444; }
 
-        .status-tag-active { color: #22c55e; text-shadow: 0 0 8px rgba(34,197,94,0.4); }
-        .status-tag-pending { color: #ef4444; }
+        .income-card {
+            background: rgba(0,0,0,0.6); border: 1.5px solid var(--gold);
+            padding: 20px; border-radius: 18px; display: flex; align-items: center; gap: 15px;
+        }
+        .icon-box { color: var(--gold); }
     </style>
 </head>
 <body class="pb-20">
 
+    <div id="header-container"></div>
     <script src="components.js"></script>
 
     <main class="max-w-7xl mx-auto px-4 pt-10">
+        
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            <div class="lg:col-span-2 gold-border-fixed p-6 flex flex-wrap items-center justify-between gap-6" style="background:#000; border-radius:20px; border:1px solid #ffd700;">
+            <div class="lg:col-span-2 gold-border-fixed p-6 flex flex-wrap items-center justify-between gap-6">
                 <div class="flex items-center gap-5">
                     <div class="w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500 flex items-center justify-center">
                         <i data-lucide="shield-check" class="text-yellow-500 w-8 h-8"></i>
@@ -86,7 +88,7 @@
                         <h2 id="wallet-address-display" class="text-xl font-black orbitron text-white">Connecting...</h2>
                         <div class="flex gap-4 mt-1">
                             <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
-                            <span class="text-[10px] text-gray-400 font-bold uppercase">Rank: <span id="header-rank" class="text-yellow-500">None</span></span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase">RANK: <span id="current-rank-header" class="text-yellow-500">G--</span></span>
                         </div>
                     </div>
                 </div>
@@ -95,7 +97,8 @@
                     <p id="direct-count" class="text-2xl font-black orbitron">0</p>
                 </div>
             </div>
-            <div class="gold-border-fixed p-6 flex flex-col justify-center" style="background:#000; border-radius:20px; border:1px solid #ffd700;">
+
+            <div class="gold-border-fixed p-6 flex flex-col justify-center">
                 <p class="text-[10px] text-yellow-500 font-black uppercase mb-3 text-center tracking-widest">Your Referral Link</p>
                 <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-yellow-500/30">
                     <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono">
@@ -104,10 +107,37 @@
             </div>
         </div>
 
-        <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">SELECT <span class="text-yellow-500">PACKAGE</span></h3>
+        <h3 class="orbitron font-black text-xs text-yellow-500 mb-6 tracking-[0.2em] uppercase">Income Statistics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+            <div class="income-card"><i data-lucide="users" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Direct Income</p><p id="direct-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="layers" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Level Income</p><p id="level-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="grid" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="zap" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p><p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="moon" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p><p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p></div></div>
+            <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
+        </div>
+
+        <div class="gold-border-fixed p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div class="flex-grow">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-2">Available Balance</p>
+                <div class="flex items-baseline gap-3">
+                    <span id="balance-large" class="text-6xl font-black orbitron">0.00</span>
+                    <span class="text-xl text-gray-500 font-bold">USDT</span>
+                </div>
+            </div>
+            <div class="w-full md:w-80 text-right">
+                <button onclick="handleWithdraw()" class="btn-main !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4">Withdraw Now</button>
+                <p class="text-[10px] font-bold text-gray-500 uppercase">Capping Left: <span id="income-cap" class="text-red-500">0.00 USDT</span></p>
+            </div>
+        </div>
+
+        <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
         <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             </div>
+
     </main>
+
+    <div id="footer-container"></div>
 
     <script src="web3-handler.js"></script>
     <script>
@@ -127,27 +157,25 @@
             if(!container) return;
 
             container.innerHTML = packageData.map(pkg => {
-                // Agar blockchain se aaya level pkg.id se bada ya barabar hai
                 const isActive = activeLevelFromBlockchain >= pkg.id;
                 
                 return `
                 <div class="package-card ${isActive ? 'active-card' : ''}">
-                    <div class="price-text orbitron">$${pkg.price}</div>
+                    <div class="price-display">$${pkg.price}</div>
 
                     ${isActive ? 
-                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy orbitron">Rebuy Package</button>` : 
-                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-buy orbitron">Buy Now</button>`
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-style orbitron">REBUY NOW</button>` : 
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-main orbitron">BUY PACKAGE</button>`
                     }
 
-                    <div class="info-line">
-                        <span class="text-gray-500">Package Name</span>
-                        <span class="text-white orbitron">${pkg.rank}</span>
+                    <div class="meta-line">
+                        <span class="text-gray-500">Package</span>
+                        <span class="text-yellow-500 orbitron">${pkg.rank}</span>
                     </div>
-
-                    <div class="info-line">
+                    <div class="meta-line">
                         <span class="text-gray-500">Status</span>
-                        <span class="${isActive ? 'status-tag-active' : 'status-tag-pending'}">
-                            ${isActive ? 'Active' : 'Inactive'}
+                        <span class="${isActive ? 'status-active' : 'status-inactive'}">
+                            ${isActive ? '● Active' : '○ Inactive'}
                         </span>
                     </div>
                 </div>
@@ -156,33 +184,6 @@
             lucide.createIcons();
         }
 
-        // --- DATA SYNC FIX ---
-        let lastSyncLevel = -99;
-
-        function syncDashboard() {
-            // Check window.userData (Jo web3-handler.js se aata hai)
-            if (window.userData) {
-                // Agar variable name currentPackageId hai
-                const currentLevel = parseInt(window.userData.currentPackageId);
-                
-                if (!isNaN(currentLevel) && currentLevel !== lastSyncLevel) {
-                    lastSyncLevel = currentLevel;
-                    renderPackages(currentLevel);
-                    
-                    // Update Header Rank
-                    const hRank = document.getElementById('header-rank');
-                    if(hRank) hRank.innerText = "G" + currentLevel;
-                    
-                    console.log("Data Received! Current Level:", currentLevel);
-                }
-            }
-        }
-
-        window.addEventListener('load', () => {
-            renderPackages(-1); // Default view
-            setInterval(syncDashboard, 1000); // Har second check karega
-        });
-
         function copyLink() {
             const refInput = document.getElementById('refURL');
             if (refInput.value.includes("Syncing") || !refInput.value) return;
@@ -190,6 +191,32 @@
             navigator.clipboard.writeText(refInput.value);
             alert("Referral link copied!");
         }
+
+        // --- REAL-TIME SYNC ENGINE ---
+        let lastKnownLvl = -99;
+
+        function startSync() {
+            // components.js se data check karein (window.userData)
+            if (window.userData && window.userData.currentPackageId !== undefined) {
+                const current = parseInt(window.userData.currentPackageId);
+                
+                if (current !== lastKnownLvl) {
+                    lastKnownLvl = current;
+                    renderPackages(current);
+                    
+                    // Update Header
+                    const rankHead = document.getElementById('current-rank-header');
+                    if(rankHead) rankHead.innerText = "G" + current;
+                    
+                    console.log("Dashboard Updated! Rank:", current);
+                }
+            }
+        }
+
+        window.addEventListener('load', () => {
+            renderPackages(-1); // Default cards
+            setInterval(startSync, 1000); // Check every second
+        });
     </script>
 </body>
 </html>
