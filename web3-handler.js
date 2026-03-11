@@ -139,22 +139,23 @@ window.handleRegister = async function() {
             return;
         }
 
-        if (!signer) {
-            const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
-            await tempProvider.send("eth_requestAccounts", []);
-            signer = tempProvider.getSigner();
-            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        }
-
+        // 1. Initial Setup
+        const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
+        await tempProvider.send("eth_requestAccounts", []);
+        signer = tempProvider.getSigner();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
+        
         const userAddress = await signer.getAddress();
         const refField = document.getElementById('reg-referrer');
         const referrerAddress = refField ? refField.value.trim() : "";
+        const regAmount = ethers.utils.parseUnits("5", 18); // G0 Package Price ($5)
 
+        // 2. Basic Validation
         if (!ethers.utils.isAddress(referrerAddress)) {
             alert("Please enter a valid Referrer Wallet Address (0x...)");
             return;
         }
-
         if (referrerAddress.toLowerCase() === userAddress.toLowerCase()) {
             alert("You cannot refer yourself!");
             return;
@@ -163,18 +164,34 @@ window.handleRegister = async function() {
         const btn = document.getElementById('reg-btn');
         if(btn) {
             btn.disabled = true;
-            btn.innerText = "CONFIRMING IN WALLET...";
+            btn.innerText = "CHECKING ALLOWANCE...";
         }
 
+        // 3. --- USDT APPROVAL LOGIC ---
+        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        
+        if (allowance.lt(regAmount)) {
+            if(btn) btn.innerText = "APPROVE 5 USDT...";
+            // Approve exact amount or MaxUint256 for smoother experience
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+            alert("Approval transaction sent! Please wait.");
+            await approveTx.wait();
+            alert("USDT Approved Successfully!");
+        }
+
+        // 4. --- CONTRACT REGISTRATION ---
+        if(btn) btn.innerText = "CONFIRMING REGISTRATION...";
+        
+        // Registration calls the contract (which usually activates G0 internally)
         const tx = await contract.register(referrerAddress, {
-            gasLimit: 400000 
+            gasLimit: 500000 // Gas limit increased for registration + G0 activation
         });
 
-        alert("Transaction sent! Please wait for confirmation.");
+        alert("Registration transaction sent to Blockchain!");
         const receipt = await tx.wait();
 
         if (receipt.status === 1) {
-            alert("Registration Successful!");
+            alert("Registration & G0 Activation Successful!");
             window.location.href = "index1.html";
         } else {
             throw new Error("Transaction failed on blockchain.");
@@ -539,6 +556,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
