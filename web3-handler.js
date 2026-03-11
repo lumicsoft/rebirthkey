@@ -450,57 +450,76 @@ window.getAllMatrixHistory = async function(userAddr, pkgId) {
     }
 }
 // --- GLOBAL DATA FETCH ---
+// --- UPDATED: GLOBAL DATA FETCH (web3-handler.js) ---
 async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
+        
+        // 1. Fetch Basic Data
         const data = await activeContract.getUserTotalData(address);
         
-        // Identity
+        // Identity update
         updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         
-        // Stats
+        // Stats update
         updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
         
-        // --- NEW: HELD INCOME ---
-        // New contract returns held income at stats[6]
-        if(data.stats.length > 6) {
-            updateText('held-income-display', format(data.stats[6]));
-        }
-
-        // Incomes
+        // Incomes update
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
-        updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
-        updateText('daily-earnings', format(data.incomes[4]));
-        updateText('reward-earnings', format(data.incomes[5]));
+        
+        // Booster/Lunar (Aapke UI ke hisab se mapping)
+        updateText('booster-fund', format(data.incomes[4]));
+        updateText('lunar-fund', format(data.incomes[2]));
 
-        // Referral Link
+        // Referral Link update
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // Accurate Package Detection
+        // --- THE FIX: ACCURATE PACKAGE DETECTION ---
         try {
+            // Contract se active packages ki list mangwai (bool[12])
             const activeStatus = await activeContract.getUserActivePackages(address);
+            
             let maxActive = -1;
-            for(let i=0; i<12; i++) {
-                if(activeStatus[i]) maxActive = i;
+            // Loop check karega ki sabse bada package kaunsa active hai
+            for(let i = 0; i < 12; i++) {
+                if(activeStatus[i] === true) {
+                    maxActive = i;
+                }
             }
+
+            // Global sync for Dashboard HTML
             window.userData.currentPackageId = maxActive;
+            
+            console.log("Verified Package Level from Contract:", maxActive);
+
+            // Agar dashboard par renderPackages function hai, to use call karo
+            if (typeof renderPackages === "function") {
+                renderPackages(maxActive);
+            }
+
+            // Header rank update
+            const rankHead = document.getElementById('current-rank-header');
+            if(rankHead) rankHead.innerText = "G" + maxActive;
+
         } catch (err) {
-            if (data.incomes[3] > 0) window.userData.currentPackageId = 0;
+            console.error("Package Detection Error:", err);
+            // Fallback: Agar upar wala fail ho jaye toh matrix income check karein
+            if (parseFloat(format(data.incomes[3])) > 0) {
+                window.userData.currentPackageId = 0;
+            }
         }
 
-        if (typeof renderPackages === "function") {
-            renderPackages(window.userData.currentPackageId);
-        }
-
-    } catch (e) { console.error("Fetch Data Error:", e); }
+    } catch (e) { 
+        console.error("Fetch Data Main Error:", e); 
+    }
 }
 
 // --- UTILS ---
@@ -527,6 +546,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
