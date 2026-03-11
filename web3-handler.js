@@ -479,7 +479,6 @@ window.getAllMatrixHistory = async function(userAddr, pkgId) {
     }
 }
 // --- GLOBAL DATA FETCH ---
-// --- UPDATED: GLOBAL DATA FETCH (web3-handler.js) ---
 async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
@@ -508,45 +507,41 @@ async function fetchAllData(address) {
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // --- KHUD KA PACKAGE DHUNDHNE KA ASLI LOGIC ---
+        // --- NAYE FUNCTION SE PACKAGE STATUS FETCH KARNA ---
         let maxActive = -1;
         
         try {
-            console.log("Checking your active packages...");
+            console.log("Fetching package status via getUserActivePackages...");
             
-            // Loop 0 se 11 (G0 to G11)
+            // Ek hi call mein 12 packages ka status (true/false) mil jayega
+            const activeStatusArray = await activeContract.getUserActivePackages(address);
+            
+            // Loop karke sabse bada 'true' index nikalna
             for (let i = 0; i < 12; i++) {
-                // Aapke contract mein User struct ke andar activePackages mapping hai
-                // Use access karne ka sahi tarika ye hai:
-                const isActive = await activeContract.users(address).then(u => activeContract.activePackages(address, i));
-                
-                if (isActive === true) {
-                    maxActive = i; // Agar true hai toh ye aapka level hai
-                } else {
-                    // Agar koi false mil gaya, matlab uske aage ke buy nahi kiye
-                    break; 
+                if (activeStatusArray[i] === true) {
+                    maxActive = i; 
                 }
             }
 
-            console.log("Aapka Current Package Level:", maxActive);
+            console.log("Verified Active Level:", maxActive);
             
-            // Dashboard ko batana ki kaunsa package active hai
+            // Global data update
             window.userData.currentPackageId = maxActive;
 
-            // 1. Cards ko Active/Unlock dikhane ke liye
+            // 1. Cards ko update karna (G0, G1 icons unlock honge)
             if (typeof renderPackages === "function") {
                 renderPackages(maxActive);
             }
 
-            // 2. Dashboard Header mein G0, G1 etc dikhane ke liye
+            // 2. Dashboard Header Rank update
             const rankHeader = document.getElementById('current-rank-header');
             if(rankHeader) {
                 rankHeader.innerText = maxActive >= 0 ? "G" + maxActive : "No Rank";
             }
 
         } catch (pkgErr) {
-            console.error("Mapping Check Error:", pkgErr);
-            // Fallback: Agar stats mein balance ya income hai toh G0 toh hoga hi
+            console.error("New Function Call Error:", pkgErr);
+            // Fallback: Agar ID exist karti hai toh G0 default
             if (data.stats[0] > 0) { 
                 maxActive = 0;
                 window.userData.currentPackageId = 0;
@@ -582,6 +577,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
