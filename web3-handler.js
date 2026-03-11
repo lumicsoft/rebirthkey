@@ -475,7 +475,7 @@ async function fetchAllData(address) {
         // 1. Basic Stats Fetch
         const data = await activeContract.getUserTotalData(address);
         
-        // UI Updates
+        // UI Updates (ID, Balance, Incomes)
         updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         updateText('balance-large', format(data.stats[1])); 
@@ -483,13 +483,16 @@ async function fetchAllData(address) {
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
         
-        // Income Updates
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
+        
+        // Dashboard specific funds (Booster/Lunar)
+        updateText('booster-fund', format(data.incomes[4])); 
+        updateText('lunar-fund', format(data.incomes[2]));
 
         // Referral URL
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
@@ -497,33 +500,42 @@ async function fetchAllData(address) {
         if(refInput) refInput.value = refUrl;
 
         // --- THE CRITICAL FIX START ---
-        // Contract se active packages ki list (bool[12]) mangwao
         try {
+            // Contract call to get active status of all 12 packages
             const activeStatus = await activeContract.getUserActivePackages(address);
-            console.log("Blockchain Active Status Array:", activeStatus);
+            console.log("Blockchain Array Received:", activeStatus);
 
             let maxActive = -1;
-            // Loop check karega ki kaun-kaun se packages true hain
+            
+            // Loop through the 12 packages
             for(let i = 0; i < 12; i++) {
-                if(activeStatus[i] === true) {
-                    maxActive = i; // Sabse bada index hi current package hai
+                // Kuch cases mein activeStatus direct array nahi hota, isliye check zaroori hai
+                if(activeStatus && activeStatus[i] === true) {
+                    maxActive = i; 
                 }
             }
 
-            // Global Object update kar rahe hain taaki Dashboard ka setInterval ise pakad le
+            // Sync with Global Object
             window.userData.currentPackageId = maxActive;
-            
-            console.log("Calculated Current Package ID:", maxActive);
+            console.log("Final Active Level Identified:", maxActive);
 
-            // Force Render (Agar setInterval slow ho toh turant update ho jaye)
+            // 1. Update UI Grid Immediately
             if (typeof renderPackages === "function") {
                 renderPackages(maxActive);
             }
+
+            // 2. Update Header Rank (Agar Dashboard par header hai)
+            const rankHeader = document.getElementById('current-rank-header');
+            if(rankHeader) {
+                rankHeader.innerText = maxActive >= 0 ? "G" + maxActive : "No Rank";
+            }
+
         } catch (pkgErr) {
-            console.error("Package Detection failed, checking Matrix income fallback:", pkgErr);
-            // Fallback: Agar upar wala fail ho jaye toh Matrix income se check karo
+            console.error("Package detection failed:", pkgErr);
+            // Fallback: Agar matrix income hai toh kam se kam G0 active hai
             if (parseFloat(format(data.incomes[3])) > 0) {
                 window.userData.currentPackageId = 0;
+                if (typeof renderPackages === "function") renderPackages(0);
             }
         }
         // --- THE CRITICAL FIX END ---
@@ -556,6 +568,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
