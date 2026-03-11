@@ -14,7 +14,7 @@ const CONTRACT_ABI = [
     "function register(address _ref) external",
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
-    "function getUserActivePackages(address _user) view returns (bool[12])"
+    
     "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss)",
     "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
@@ -26,7 +26,7 @@ const CONTRACT_ABI = [
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
     "function getLevelTeamDetail(address _user, uint256 _level) view returns (tuple(address userAddress, uint256 registrationTime, uint256 currentPackageId, uint256 totalEarned)[])",
     "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
-    "function getUserActivePackages(address _user) view returns (bool[12])"
+    "function getUserActivePackages(address _user) view returns (bool[12])",
 ];
 
 const USDT_ABI = [
@@ -577,6 +577,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
