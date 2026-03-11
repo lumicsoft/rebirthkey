@@ -20,7 +20,7 @@ const CONTRACT_ABI = [
     "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
     "function rebirthCount(address, uint256) view returns (uint256)",
     "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time)[])",
-    "function getUserTotalData(address _user) view returns (uint256[6] stats, uint256[6] incomes, address ref)",
+    "function getUserTotalData(address _user) view returns (uint256[7] stats, uint256[6] incomes, address ref)", // Stats updated to 7 for Held Income
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
     "function getLevelTeamDetail(address _user, uint256 _level) view returns (tuple(address userAddress, uint256 registrationTime, uint256 currentPackageId, uint256 totalEarned)[])",
@@ -317,18 +317,17 @@ window.getIncomeHistory = async (userAddress) => {
         // Blockchain se user ke specific 'IncomeReceived' events nikalna
         const filter = activeContract.filters.IncomeReceived(userAddress);
         
-        // Pichle 10,000 blocks tak ka data (Aap ise badha bhi sakte hain)
-        const events = await activeContract.queryFilter(filter, -10000, 'latest');
+        // Block range ko thoda badha kar 15,000-20,000 blocks rakhein taaki purani history dikhe
+        const events = await activeContract.queryFilter(filter, -20000, 'latest');
         
-        // Data ko readable format mein convert karna
+        // Data ko readable format mein convert karna (Amount format ke saath)
         const history = events.map(e => ({
-            amount: e.args.amount,
+            amount: format(e.args.amount), // Isko format karna zaroori hai display ke liye
             incomeType: e.args.incomeType.toNumber(),
-            // BlockNumber ko hum ID ki tarah use kar sakte hain
             id: e.blockNumber 
         }));
 
-        // Latest income sabse upar dikhane ke liye reverse karein
+        // Latest income sabse upar dikhane ke liye reverse
         return history.reverse();
     } catch (e) {
         console.error("History fetch error:", e);
@@ -456,17 +455,23 @@ async function fetchAllData(address) {
         let activeContract = window.contract || contract;
         const data = await activeContract.getUserTotalData(address);
         
-        // 1. Identity
+        // Identity
         updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         
-        // 2. Stats
+        // Stats
         updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
+        
+        // --- NEW: HELD INCOME ---
+        // New contract returns held income at stats[6]
+        if(data.stats.length > 6) {
+            updateText('held-income-display', format(data.stats[6]));
+        }
 
-        // 3. Incomes
+        // Incomes
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
@@ -479,8 +484,7 @@ async function fetchAllData(address) {
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // --- PACKAGE LEVEL DETECTION LOGIC ---
-        // Hum check kar rahe hain ki user ne max kaunsa package buy kiya hai
+        // Accurate Package Detection
         try {
             const activeStatus = await activeContract.getUserActivePackages(address);
             let maxActive = -1;
@@ -489,11 +493,9 @@ async function fetchAllData(address) {
             }
             window.userData.currentPackageId = maxActive;
         } catch (err) {
-            // Fallback: Agar upar wala function nahi hai toh Matrix income se guess karein
             if (data.incomes[3] > 0) window.userData.currentPackageId = 0;
         }
 
-        // Trigger Dashboard UI Update
         if (typeof renderPackages === "function") {
             renderPackages(window.userData.currentPackageId);
         }
