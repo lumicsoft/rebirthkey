@@ -149,52 +149,64 @@ window.handleRegister = async function() {
         const userAddress = await signer.getAddress();
         const refField = document.getElementById('reg-referrer');
         const referrerAddress = refField ? refField.value.trim() : "";
-        const regAmount = ethers.utils.parseUnits("5", 18); // G0 Package Price ($5)
+        const regAmount = ethers.utils.parseUnits("5", 18);
 
-        // 2. Basic Validation
+        // 2. Validations
         if (!ethers.utils.isAddress(referrerAddress)) {
             alert("Please enter a valid Referrer Wallet Address (0x...)");
-            return;
-        }
-        if (referrerAddress.toLowerCase() === userAddress.toLowerCase()) {
-            alert("You cannot refer yourself!");
             return;
         }
 
         const btn = document.getElementById('reg-btn');
         if(btn) {
             btn.disabled = true;
-            btn.innerText = "CHECKING ALLOWANCE...";
+            btn.innerText = "PROCESSING...";
         }
 
-        // 3. --- USDT APPROVAL LOGIC ---
+        // 3. --- SMART USDT APPROVAL ---
         const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
-        
         if (allowance.lt(regAmount)) {
-            if(btn) btn.innerText = "APPROVE 5 USDT...";
-            // Approve exact amount or MaxUint256 for smoother experience
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-            alert("Approval transaction sent! Please wait.");
+            if(btn) btn.innerText = "APPROVE USDT...";
+            
+            // Approval ke liye bhi gas estimate kar rahe hain
+            const estApproveGas = await usdtContract.estimateGas.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+            
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256, {
+                gasLimit: estApproveGas.mul(130).div(100) // 30% Buffer
+            });
             await approveTx.wait();
-            alert("USDT Approved Successfully!");
         }
 
-        // 4. --- CONTRACT REGISTRATION ---
-        if(btn) btn.innerText = "CONFIRMING REGISTRATION...";
-        
-        // Registration calls the contract (which usually activates G0 internally)
-        const tx = await contract.register(referrerAddress, {
-            gasLimit: 500000 // Gas limit increased for registration + G0 activation
-        });
+        // 4. --- DYNAMIC GAS ESTIMATION FOR REGISTER ---
+        if(btn) btn.innerText = "ESTIMATING GAS...";
 
-        alert("Registration transaction sent to Blockchain!");
-        const receipt = await tx.wait();
+        try {
+            // Contract se pucho ki is transaction mein kitni gas lagegi
+            const estimatedGas = await contract.estimateGas.register(referrerAddress);
+            
+            // 30% Buffer lagana (Safe side ke liye)
+            const gasLimitWithBuffer = estimatedGas.mul(130).div(100); 
+            
+            console.log("Estimated Gas:", estimatedGas.toString());
+            console.log("Gas with 30% Buffer:", gasLimitWithBuffer.toString());
 
-        if (receipt.status === 1) {
-            alert("Registration & G0 Activation Successful!");
-            window.location.href = "index1.html";
-        } else {
-            throw new Error("Transaction failed on blockchain.");
+            if(btn) btn.innerText = "CONFIRM IN WALLET...";
+
+            const tx = await contract.register(referrerAddress, {
+                gasLimit: gasLimitWithBuffer
+            });
+
+            alert("Transaction sent! Waiting for confirmation...");
+            const receipt = await tx.wait();
+
+            if (receipt.status === 1) {
+                alert("Registration Successful!");
+                window.location.href = "index1.html";
+            }
+        } catch (gasErr) {
+            // Agar estimateGas fail hota hai, matlab transaction contract level pe fail ho rahi hai (e.g. already registered)
+            console.error("Gas Estimation Failed:", gasErr);
+            throw new Error("Transaction would fail. Check if you are already registered or have enough BNB for gas.");
         }
 
     } catch (err) {
@@ -204,8 +216,7 @@ window.handleRegister = async function() {
             btn.disabled = false;
             btn.innerText = "REGISTER NOW";
         }
-        let msg = err.reason || err.message || "Unknown error";
-        alert("Error: " + msg);
+        alert("Error: " + (err.reason || err.message));
     }
 }
 
@@ -568,6 +579,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
