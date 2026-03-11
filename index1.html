@@ -23,7 +23,12 @@
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.15); border-radius: 20px;
         }
 
-        /* --- COMPACT PACKAGE CARD (6 per line on laptop) --- */
+        .income-card {
+            background: rgba(0,0,0,0.6); border: 1.5px solid var(--gold);
+            padding: 20px; border-radius: 18px; display: flex; align-items: center; gap: 15px;
+        }
+
+        /* --- NEW COMPACT PACKAGE CARD --- */
         .package-card {
             background: linear-gradient(180deg, rgba(255,215,0,0.05) 0%, rgba(0,0,0,1) 100%);
             border: 1px solid rgba(255, 215, 0, 0.3);
@@ -36,47 +41,41 @@
         .package-card.active-card {
             border: 1.5px solid var(--gold);
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
-            background: linear-gradient(180deg, rgba(34, 197, 94, 0.1) 0%, rgba(0,0,0,1) 100%);
         }
 
-        .price-display-small {
+        .price-tag {
             font-size: 1.8rem; font-weight: 900; color: white;
-            font-family: 'Orbitron', sans-serif; margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif; margin-bottom: 12px;
             display: block;
         }
 
-        .btn-elite-buy {
+        .btn-buy-elite {
             background: linear-gradient(135deg, #ffd700, #b8860b);
             color: black; font-weight: 900; border-radius: 8px;
-            font-size: 11px; text-transform: uppercase; width: 100%; 
-            padding: 10px 5px; margin-bottom: 15px; transition: 0.3s;
+            font-size: 10px; text-transform: uppercase; width: 100%; 
+            padding: 8px 4px; margin-bottom: 15px; transition: 0.3s;
         }
-        .btn-elite-rebuy {
-            background: transparent; border: 1.5px solid var(--gold);
+        .btn-rebuy-elite {
+            background: transparent; border: 1px solid var(--gold);
             color: var(--gold); font-weight: 900; border-radius: 8px;
-            font-size: 11px; text-transform: uppercase; width: 100%; 
-            padding: 10px 5px; margin-bottom: 15px; transition: 0.3s;
+            font-size: 10px; text-transform: uppercase; width: 100%; 
+            padding: 8px 4px; margin-bottom: 15px; transition: 0.3s;
         }
-        .btn-elite-rebuy:hover { background: var(--gold); color: black; }
+        .btn-rebuy-elite:hover { background: var(--gold); color: black; }
 
-        .meta-row {
+        .meta-info-line {
             display: flex; justify-content: space-between;
-            padding: 8px 0; border-top: 1px solid rgba(255,215,0,0.1);
-            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            padding: 6px 0; border-top: 1px solid rgba(255,215,0,0.1);
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
         }
-        .status-on { color: #22c55e; }
-        .status-off { color: #ef4444; }
+        .status-text-active { color: #22c55e; }
+        .status-text-pending { color: #ef4444; }
 
-        .income-card {
-            background: rgba(0,0,0,0.6); border: 1.5px solid var(--gold);
-            padding: 20px; border-radius: 18px; display: flex; align-items: center; gap: 15px;
-        }
         .icon-box { color: var(--gold); }
     </style>
 </head>
 <body class="pb-20">
 
-    <div id="header-container"></div>
     <script src="components.js"></script>
 
     <main class="max-w-7xl mx-auto px-4 pt-10">
@@ -91,7 +90,7 @@
                         <h2 id="wallet-address-display" class="text-xl font-black orbitron text-white">Connecting...</h2>
                         <div class="flex gap-4 mt-1">
                             <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
-                            <span class="text-[10px] text-gray-500 font-bold uppercase">RANK: <span id="current-rank-header" class="text-yellow-500">G--</span></span>
+                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
                         </div>
                     </div>
                 </div>
@@ -117,6 +116,9 @@
             <div class="income-card"><i data-lucide="grid" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
             <div class="income-card"><i data-lucide="zap" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p><p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p></div></div>
             <div class="income-card"><i data-lucide="moon" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p><p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="trending-up" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="globe" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Daily Income</p><p id="daily-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="award" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Total Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
             <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
         </div>
 
@@ -129,7 +131,7 @@
                 </div>
             </div>
             <div class="w-full md:w-80 text-right">
-                <button onclick="handleWithdraw()" class="btn-elite-buy !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4">Withdraw Now</button>
+                <button onclick="handleWithdraw()" class="btn-action !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-weight: 900; border-radius: 10px; width: 100%;">Withdraw Now</button>
                 <p class="text-[10px] font-bold text-gray-500 uppercase">Capping Left: <span id="income-cap" class="text-red-500">0.00 USDT</span></p>
             </div>
         </div>
@@ -140,20 +142,17 @@
 
     </main>
 
-    <div id="footer-container"></div>
-
     <script src="web3-handler.js"></script>
     <script>
         lucide.createIcons();
 
-        // Updated Data to include Rank names
         const packageData = [
-            { id: 0, rank: "G0", price: 5 }, { id: 1, rank: "G1", price: 44 }, 
-            { id: 2, rank: "G2", price: 65 }, { id: 3, rank: "G3", price: 106 }, 
-            { id: 4, rank: "G4", price: 187 }, { id: 5, rank: "G5", price: 348 }, 
-            { id: 6, rank: "G6", price: 669 }, { id: 7, rank: "G7", price: 1310 }, 
-            { id: 8, rank: "G8", price: 2591 }, { id: 9, rank: "G9", price: 5152 }, 
-            { id: 10, rank: "G10", price: 10273 }, { id: 11, rank: "G11", price: 20514 }
+            { id: 0, name: "G0", price: 5 }, { id: 1, name: "G1", price: 44 }, 
+            { id: 2, name: "G2", price: 65 }, { id: 3, name: "G3", price: 106 }, 
+            { id: 4, name: "G4", price: 187 }, { id: 5, name: "G5", price: 348 }, 
+            { id: 6, name: "G6", price: 669 }, { id: 7, name: "G7", price: 1310 }, 
+            { id: 8, name: "G8", price: 2591 }, { id: 9, name: "G9", price: 5152 }, 
+            { id: 10, name: "G10", price: 10273 }, { id: 11, name: "G11", price: 20514 }
         ];
 
         async function renderPackages(activeLevelFromBlockchain = -1) {
@@ -161,26 +160,26 @@
             if(!container) return;
 
             container.innerHTML = packageData.map(pkg => {
-                // Logic: if current user level is >= pkg.id, then it is Active/Owned
                 const isActive = activeLevelFromBlockchain >= pkg.id;
                 
                 return `
                 <div class="package-card ${isActive ? 'active-card' : ''}">
-                    <span class="price-display-small">$${pkg.price}</span>
+                    <span class="price-tag">$${pkg.price}</span>
 
                     ${isActive ? 
-                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-elite-rebuy orbitron">REBUY NOW</button>` : 
-                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-elite-buy orbitron">BUY PACKAGE</button>`
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-elite orbitron">REBUY</button>` : 
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-buy-elite orbitron">BUY NOW</button>`
                     }
 
-                    <div class="meta-row">
-                        <span class="text-gray-500">Rank</span>
-                        <span class="text-yellow-500 orbitron">${pkg.rank}</span>
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Package</span>
+                        <span class="text-white orbitron">${pkg.name}</span>
                     </div>
-                    <div class="meta-row">
+
+                    <div class="meta-info-line">
                         <span class="text-gray-500">Status</span>
-                        <span class="${isActive ? 'status-on' : 'status-off'}">
-                            ${isActive ? '● Active' : '○ Inactive'}
+                        <span class="${isActive ? 'status-text-active' : 'status-text-pending'}">
+                            ${isActive ? 'Active' : 'Inactive'}
                         </span>
                     </div>
                 </div>
@@ -197,32 +196,23 @@
             alert("Referral link copied!");
         }
 
-        // --- DYNAMIC SYNC ENGINE ---
-        let lastKnownLvl = -99;
-
-        function startSync() {
-            if (window.userData && window.userData.currentPackageId !== undefined) {
-                const current = parseInt(window.userData.currentPackageId);
-                
-                // Only update UI if level actually changes to prevent flickering
-                if (current !== lastKnownLvl) {
-                    lastKnownLvl = current;
-                    renderPackages(current);
-                    
-                    // Update Header Rank Badge
-                    const rankHead = document.getElementById('current-rank-header');
-                    if(rankHead) {
-                        rankHead.innerText = current >= 0 ? "G" + current : "NONE";
-                    }
-                    
-                    console.log("Dashboard UI Synced: Rank G" + current);
-                }
-            }
-        }
+        // --- REAL-TIME DATA SYNC ---
+        let lastKnownLevel = -99;
 
         window.addEventListener('load', () => {
             renderPackages(-1); // Initial render
-            setInterval(startSync, 1000); // Auto-sync every second
+            
+            setInterval(() => {
+                if (window.userData && window.userData.currentPackageId !== undefined) {
+                    const currentLevel = parseInt(window.userData.currentPackageId);
+                    
+                    if (currentLevel !== lastKnownLevel) {
+                        lastKnownLevel = currentLevel;
+                        renderPackages(currentLevel);
+                        console.log("Package UI Updated. Current Level:", currentLevel);
+                    }
+                }
+            }, 1000);
         });
     </script>
 </body>
