@@ -10,63 +10,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --gold: #ffd700;
-            --bg-dark: #060a08;
-        }
+        :root { --gold: #ffd700; --bg-dark: #060a08; }
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg-dark);
-            color: white; 
+            background: var(--bg-dark); color: white; 
             background-image: radial-gradient(circle at 50% 0%, #1a2e23, #060a08 80%);
         }
         .orbitron { font-family: 'Orbitron', sans-serif; }
-        
         .gold-border-fixed {
-            background: #000000;
-            border: 1.5px solid var(--gold);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
-            border-radius: 20px;
+            background: #000000; border: 1.5px solid var(--gold);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.15); border-radius: 20px;
         }
-
         .income-card {
-            background: rgba(0,0,0,0.6);
-            border: 1.5px solid var(--gold);
-            padding: 20px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            background: rgba(0,0,0,0.6); border: 1.5px solid var(--gold);
+            padding: 20px; border-radius: 18px; display: flex; align-items: center; gap: 15px;
         }
-
-        .status-container {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            text-align: right;
-        }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-bottom: 2px;
-        }
+        .status-container { position: absolute; top: 15px; right: 15px; text-align: right; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-bottom: 2px; }
         .dot-active { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
         .dot-inactive { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
-
+        
         .btn-action {
             background: linear-gradient(135deg, #ffd700, #b8860b);
             color: black; font-weight: 900; border-radius: 10px;
             text-transform: uppercase; transition: 0.3s; width: 100%; padding: 10px;
         }
-        /* Button Disabled Style */
-        .btn-action:disabled {
-            background: #222;
-            color: #555;
-            cursor: not-allowed;
-            border: 1px solid #333;
+        .btn-rebuy {
+            background: transparent; border: 1.5px solid var(--gold);
+            color: var(--gold); font-weight: 900; border-radius: 10px;
+            text-transform: uppercase; transition: 0.3s; width: 100%; padding: 10px;
         }
+        .btn-rebuy:hover { background: var(--gold); color: black; }
         .icon-box { color: var(--gold); }
     </style>
 </head>
@@ -86,7 +60,7 @@
                         <h2 id="wallet-address-display" class="text-xl font-black orbitron text-white">Connecting...</h2>
                         <div class="flex gap-4 mt-1">
                             <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
-                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase">Rank: <span id="current-rank-header" class="text-yellow-500">Fetching...</span></span>
                         </div>
                     </div>
                 </div>
@@ -110,13 +84,8 @@
             <div class="income-card"><i data-lucide="users" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Direct Income</p><p id="direct-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
             <div class="income-card"><i data-lucide="layers" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Level Income</p><p id="level-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
             <div class="income-card"><i data-lucide="grid" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            
             <div class="income-card"><i data-lucide="zap" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p><p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p></div></div>
             <div class="income-card"><i data-lucide="moon" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p><p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p></div></div>
-            <div class="income-card"><i data-lucide="trending-up" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            
-            <div class="income-card"><i data-lucide="globe" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Daily Income</p><p id="daily-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="income-card"><i data-lucide="award" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Total Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
             <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
         </div>
 
@@ -136,53 +105,65 @@
 
         <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
         <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-             </div>
+            </div>
 
     </main>
+
+    <div id="footer-placeholder"></div>
 
     <script src="web3-handler.js"></script>
     <script>
         lucide.createIcons();
 
+        // Package Configuration with Rank Names
         const packageData = [
-            { id: 0, price: 5 }, { id: 1, price: 44 }, { id: 2, price: 65 }, 
-            { id: 3, price: 106 }, { id: 4, price: 187 }, { id: 5, price: 348 }, 
-            { id: 6, price: 669 }, { id: 7, price: 1310 }, { id: 8, price: 2591 }, 
-            { id: 9, price: 5152 }, { id: 10, price: 10273 }, { id: 11, price: 20514 }
+            { id: 0, name: "G0", price: 5 }, { id: 1, name: "G1", price: 44 }, 
+            { id: 2, name: "G2", price: 65 }, { id: 3, name: "G3", price: 106 }, 
+            { id: 4, name: "G4", price: 187 }, { id: 5, name: "G5", price: 348 }, 
+            { id: 6, name: "G6", price: 669 }, { id: 7, name: "G7", price: 1310 }, 
+            { id: 8, name: "G8", price: 2591 }, { id: 9, name: "G9", price: 5152 }, 
+            { id: 10, name: "G10", price: 10273 }, { id: 11, name: "G11", price: 20514 }
         ];
 
-        // Is function ko blockchain data aane par call kiya jata hai
         async function renderPackages(activeLevelFromBlockchain = -1) {
             const container = document.getElementById('package-grid');
             if(!container) return;
 
             container.innerHTML = packageData.map(pkg => {
-                // Agar user ka current index pkg.id se bada ya barabar hai toh active
+                // Determine if this package is owned
                 const isActive = activeLevelFromBlockchain >= pkg.id; 
                 
                 return `
-                <div class="gold-border-fixed p-6 flex flex-col justify-between relative min-h-[250px] ${isActive ? 'bg-green-500/5 border-green-500/50' : ''}">
+                <div class="gold-border-fixed p-6 flex flex-col justify-between relative min-h-[280px] ${isActive ? 'bg-yellow-500/5' : 'opacity-80'}">
                     <div class="status-container">
                         <div class="status-dot ${isActive ? 'dot-active' : 'dot-inactive'}"></div>
-                        <p class="text-[8px] font-black uppercase ${isActive ? 'text-green-500' : 'text-red-500'}">
-                            ${isActive ? 'Active' : 'Inactive'}
+                        <p class="text-[9px] font-black uppercase ${isActive ? 'text-green-500' : 'text-red-500'}">
+                            ${isActive ? 'Active' : 'Pending'}
                         </p>
                     </div>
 
                     <div>
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Tier ${pkg.id + 1}</span>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs font-black text-yellow-500 orbitron tracking-widest">${pkg.name}</span>
                         </div>
-                        <h4 class="text-4xl font-black orbitron mb-6">$${pkg.price}</h4>
+                        <h4 class="text-4xl font-black orbitron mb-2">$${pkg.price}</h4>
+                        <p class="text-[10px] text-gray-500 uppercase font-bold">Tier ${pkg.id + 1}</p>
                     </div>
                     
-                    <button onclick="handleBuyPackage(${pkg.id})" 
-                            class="btn-action" 
-                            ${isActive ? 'disabled' : ''}>
-                        ${isActive ? 'OWNED' : 'BUY NOW'}
-                    </button>
+                    <div class="mt-6">
+                        ${isActive ? `
+                            <button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy">
+                                REBUY 
+                            </button>
+                        ` : `
+                            <button onclick="handleBuyPackage(${pkg.id})" class="btn-action">
+                                BUY NOW
+                            </button>
+                        `}
+                    </div>
                 </div>
-            `}).join('');
+                `;
+            }).join('');
             lucide.createIcons();
         }
 
@@ -194,22 +175,28 @@
             alert("Referral link copied!");
         }
 
-        // --- AUTOMATIC SYNC LOGIC ---
-        let lastKnownLevel = -2; // Track change
+        // --- DYNAMIC SYNC ENGINE ---
+        let lastKnownLevel = -2;
 
         window.addEventListener('load', () => {
-            renderPackages(-1); // Initial state (all inactive)
+            renderPackages(-1); // Initial render
             
-            // Ye loop har 1 second mein check karega ki data load hua ya nahi
+            // Loop for Real-time UI Updates
             setInterval(() => {
                 if (window.userData && window.userData.currentPackageId !== undefined) {
                     const currentLevel = parseInt(window.userData.currentPackageId);
                     
-                    // Sirf tabhi re-render karein jab level change ho
                     if (currentLevel !== lastKnownLevel) {
                         lastKnownLevel = currentLevel;
                         renderPackages(currentLevel);
-                        console.log("Dashboard Updated: User Level", currentLevel);
+                        
+                        // Update Header Rank Badge
+                        const headerRank = document.getElementById('current-rank-header');
+                        if(headerRank) {
+                            headerRank.innerText = currentLevel >= 0 ? "G" + currentLevel : "No Active Package";
+                        }
+                        
+                        console.log("Dashboard Auto-Synced: Rank G" + currentLevel);
                     }
                 }
             }, 1000);
