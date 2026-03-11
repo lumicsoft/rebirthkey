@@ -1,5 +1,5 @@
 let provider, signer, contract, usdtContract;
-const CONTRACT_ADDRESS = "0x9143e06B629F16AA07b034079F58d2e7f35AFB38"; 
+const CONTRACT_ADDRESS = "0x745A9f78c77D7b0E55C2031960956097BAf0d39a"; 
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
 // --- GLOBAL DATA OBJECT FOR DASHBOARD SYNC ---
@@ -14,6 +14,7 @@ const CONTRACT_ABI = [
     "function register(address _ref) external",
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
+    "function getUserActivePackages(address _user) view returns (bool[12])"
     "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss)",
     "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
@@ -581,6 +582,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
