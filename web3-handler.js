@@ -1,5 +1,5 @@
 let provider, signer, contract, usdtContract;
-const CONTRACT_ADDRESS = "0x6BC5601D1B58A9699EF51769cd9cCbA7D0bF398e"; 
+const CONTRACT_ADDRESS = "0x9143e06B629F16AA07b034079F58d2e7f35AFB38"; 
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
 // --- GLOBAL DATA OBJECT FOR DASHBOARD SYNC ---
@@ -525,6 +525,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
