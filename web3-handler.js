@@ -455,73 +455,66 @@ async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
         
-        // 1. Fetch Basic Data
+        // 1. Basic Stats Fetch
         const data = await activeContract.getUserTotalData(address);
         
-        // Identity update
+        // UI Updates
         updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
-        
-        // Stats update
         updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
         
-        // Incomes update
+        // Income Updates
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
+        updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
-        
-        // Booster/Lunar (Aapke UI ke hisab se mapping)
-        updateText('booster-fund', format(data.incomes[4]));
-        updateText('lunar-fund', format(data.incomes[2]));
+        updateText('daily-earnings', format(data.incomes[4]));
+        updateText('reward-earnings', format(data.incomes[5]));
 
-        // Referral Link update
+        // Referral URL
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // --- THE FIX: ACCURATE PACKAGE DETECTION ---
+        // --- THE CRITICAL FIX START ---
+        // Contract se active packages ki list (bool[12]) mangwao
         try {
-            // Contract se active packages ki list mangwai (bool[12])
             const activeStatus = await activeContract.getUserActivePackages(address);
-            
+            console.log("Blockchain Active Status Array:", activeStatus);
+
             let maxActive = -1;
-            // Loop check karega ki sabse bada package kaunsa active hai
+            // Loop check karega ki kaun-kaun se packages true hain
             for(let i = 0; i < 12; i++) {
                 if(activeStatus[i] === true) {
-                    maxActive = i;
+                    maxActive = i; // Sabse bada index hi current package hai
                 }
             }
 
-            // Global sync for Dashboard HTML
+            // Global Object update kar rahe hain taaki Dashboard ka setInterval ise pakad le
             window.userData.currentPackageId = maxActive;
             
-            console.log("Verified Package Level from Contract:", maxActive);
+            console.log("Calculated Current Package ID:", maxActive);
 
-            // Agar dashboard par renderPackages function hai, to use call karo
+            // Force Render (Agar setInterval slow ho toh turant update ho jaye)
             if (typeof renderPackages === "function") {
                 renderPackages(maxActive);
             }
-
-            // Header rank update
-            const rankHead = document.getElementById('current-rank-header');
-            if(rankHead) rankHead.innerText = "G" + maxActive;
-
-        } catch (err) {
-            console.error("Package Detection Error:", err);
-            // Fallback: Agar upar wala fail ho jaye toh matrix income check karein
+        } catch (pkgErr) {
+            console.error("Package Detection failed, checking Matrix income fallback:", pkgErr);
+            // Fallback: Agar upar wala fail ho jaye toh Matrix income se check karo
             if (parseFloat(format(data.incomes[3])) > 0) {
                 window.userData.currentPackageId = 0;
             }
         }
+        // --- THE CRITICAL FIX END ---
 
     } catch (e) { 
-        console.error("Fetch Data Main Error:", e); 
+        console.error("Fetch Data Global Error:", e); 
     }
 }
-
 // --- UTILS ---
 const format = (val) => {
     try { 
@@ -546,6 +539,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
