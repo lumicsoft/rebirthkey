@@ -493,7 +493,7 @@ async function fetchAllData(address) {
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
-        
+        updateText('held-income', format(data.stats[6]));
         // Incomes
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
@@ -577,6 +577,7 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
+
 
 
 
