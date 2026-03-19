@@ -75,7 +75,7 @@
                     <tbody id="income-table-body" class="text-sm"></tbody>
                 </table>
                 <div id="no-data" class="hidden text-center py-20">
-                    <i data-lucide="database" class="w-12 h-12 text-gray-500 mx-auto mb-4"></i>
+                    <i data-lucide="database" class="w-12 h-12 text-gray-700 mx-auto mb-4"></i>
                     <p class="text-gray-500 orbitron text-xs">No Income Records Found</p>
                 </div>
             </div>
@@ -119,7 +119,7 @@
             tableBody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-yellow-500 orbitron text-xs">Syncing Ledger...</td></tr>`;
 
             const userData = await window.contract.getUserTotalData(userAddr);
-            totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(userData.stats[2])).toFixed(2)}`;
+            totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(userData.stats[2] || 0)).toFixed(2)}`;
 
             const history = await window.contract.getUserIncomeHistory(userAddr);
 
@@ -135,17 +135,26 @@
             for (let i = history.length - 1; i >= 0; i--) {
                 const record = history[i];
                 
-                // Data Extraction with Fallbacks
-                const amt = ethers.utils.formatEther(record.amount || record[0]);
-                const typeIndex = (record.incomeType?.toNumber) ? record.incomeType.toNumber() : Number(record.incomeType || record[1]);
-                const timestamp = (record.time?.toNumber) ? record.time.toNumber() : Number(record.time || record[2]);
+                // --- FIX: SAFE DATA EXTRACTION ---
+                // record.amount पर कभी भी .toNumber() नहीं करना!
+                const amt = ethers.utils.formatEther(record.amount || record[0] || "0");
                 
-                // New Variables: User From and Package ID
+                // Type, Time और Package छोटे Numbers होते हैं, इन्हें सुरक्षित रूप से निकालें
+                const rawType = record.incomeType || record[1] || 0;
+                const typeKey = (rawType.toNumber) ? rawType.toNumber() : Number(rawType);
+                
+                const rawTime = record.time || record[2] || 0;
+                const timestamp = (rawTime.toNumber) ? rawTime.toNumber() : Number(rawTime);
+                
                 const fromUser = record.fromUser || record[3] || "System";
-                const packageId = (record.packageId?.toNumber) ? record.packageId.toNumber() : Number(record.packageId || record[4] || 0);
+                
+                const rawPkg = record.packageId || record[4] || 0;
+                const packageId = (rawPkg.toNumber) ? rawPkg.toNumber() : Number(rawPkg);
 
-                const type = INCOME_TYPES[typeIndex] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
-                const shortFrom = fromUser !== "System" ? `${fromUser.substring(0, 6)}...${fromUser.substring(38)}` : "System";
+                const type = INCOME_TYPES[typeKey] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
+                const shortFrom = (fromUser !== "System" && fromUser !== ethers.constants.AddressZero) 
+                                ? `${fromUser.substring(0, 6)}...${fromUser.substring(38)}` 
+                                : "System";
 
                 tableHTML += `
                     <tr class="income-row border-b border-white/5 transition-colors">
@@ -165,7 +174,7 @@
 
         } catch (err) {
             console.error("Report Error:", err);
-            tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs">Sync Error: Verify Contract ABI</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs">Sync Error: Check Console for details</td></tr>`;
         }
     }
 
