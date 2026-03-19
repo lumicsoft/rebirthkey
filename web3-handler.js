@@ -1,5 +1,5 @@
 let provider, signer, contract, usdtContract;
-const CONTRACT_ADDRESS = "0xFa568B37A907dCFF43Df0628717e875F882CeD72"; 
+const CONTRACT_ADDRESS = "0x245a913776AbC01EB607F23C7bca1a410d8760ef"; 
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
 // --- GLOBAL DATA OBJECT FOR DASHBOARD SYNC ---
@@ -14,18 +14,20 @@ const CONTRACT_ABI = [
     "function register(address _ref) external",
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
-    
+    "function claimAllIncomes() external", 
     "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss)",
     "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
     "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
     "function rebirthCount(address, uint256) view returns (uint256)",
+    "function getPendingIncomeDetails(address _user) view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer)",
     "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time)[])",
-    "function getUserTotalData(address _user) view returns (uint256[7] stats, uint256[6] incomes, address ref)", // Stats updated to 7 for Held Income
+    "function getUserTotalData(address _user) view returns (uint256[9] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
     "function getLevelTeamDetail(address _user, uint256 _level) view returns (tuple(address userAddress, uint256 registrationTime, uint256 currentPackageId, uint256 totalEarned)[])",
     "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
+    "event PackageBought(address indexed user, uint256 pkgId, uint256 amount)",
     "function getUserActivePackages(address _user) view returns (bool[12])",
 ];
 
@@ -107,7 +109,32 @@ window.handleWithdraw = async function() {
         location.reload();
     } catch (err) { alert("Withdraw failed: " + (err.reason || err.message)); }
 }
+window.handleClaimIncomes = async function() {
+    try {
+        const btn = document.getElementById('claim-btn');
+        if(btn) btn.innerText = "CLAIMING...";
+        
+        // Pehle check karein ki kuch pending hai ya nahi
+        const address = await signer.getAddress();
+        const pending = await contract.getPendingIncomeDetails(address);
+        const totalPending = pending.pendingDailyPool.add(pending.pendingLunar).add(pending.pendingBoxer);
 
+        if (totalPending.eq(0)) {
+            alert("No pending income to claim. New rewards generate after 12:00 AM IST.");
+            if(btn) btn.innerText = "CLAIM REWARDS";
+            return;
+        }
+
+        const tx = await contract.claimAllIncomes();
+        await tx.wait();
+        alert("Incomes claimed successfully!");
+        location.reload();
+    } catch (err) { 
+        alert("Claim failed: " + (err.reason || "Check if rewards are already claimed today.")); 
+        const btn = document.getElementById('claim-btn');
+        if(btn) btn.innerText = "CLAIM REWARDS";
+    }
+}
 window.handleLogin = async function() {
     try {
         if (!window.ethereum) return alert("Please install MetaMask!");
@@ -483,18 +510,20 @@ async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
         
-        // 1. Basic Stats Fetch (ID, Balance, Incomes)
+        // stats index mapping as per Solidity: 
+        // 0:id, 1:balance, 2:totalEarned, 3:incomeCap, 4:directCount, 5:cappingLoss, 6:heldIncome, 7:lunar, 8:boxer
         const data = await activeContract.getUserTotalData(address);
         
-        // UI Updates
-        updateText('wallet-address-display', address.substring(0, 6) + "..." + address.substring(address.length - 4));
+        // Dashboard Stats Update
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
-        updateText('held-income', format(data.stats[6]));
-        // Incomes
+        updateText('capping-loss', format(data.stats[5])); // Optional: if you show capping loss
+        updateText('held-income', format(data.stats[6])); // New: Held Income ($200 logic or capping)
+        
+        // Incomes (stats[7] and stats[8] are for specific rewards if needed)
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
@@ -502,52 +531,31 @@ async function fetchAllData(address) {
         updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
 
-        // Referral URL
+        // Referral Logic
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // --- NAYE FUNCTION SE PACKAGE STATUS FETCH KARNA ---
-        let maxActive = -1;
-        
+        // Pending Rewards Check (for Claim Button badge/text)
         try {
-            console.log("Fetching package status via getUserActivePackages...");
-            
-            // Ek hi call mein 12 packages ka status (true/false) mil jayega
-            const activeStatusArray = await activeContract.getUserActivePackages(address);
-            
-            // Loop karke sabse bada 'true' index nikalna
-            for (let i = 0; i < 12; i++) {
-                if (activeStatusArray[i] === true) {
-                    maxActive = i; 
-                }
-            }
+            const pending = await activeContract.getPendingIncomeDetails(address);
+            const totalP = parseFloat(format(pending.pendingDailyPool.add(pending.pendingLunar).add(pending.pendingBoxer)));
+            const claimText = document.getElementById('pending-claim-text');
+            if(claimText) claimText.innerText = `Pending: ${totalP.toFixed(2)} USDT`;
+        } catch(e) {}
 
-            console.log("Verified Active Level:", maxActive);
-            
-            // Global data update
-            window.userData.currentPackageId = maxActive;
-
-            // 1. Cards ko update karna (G0, G1 icons unlock honge)
-            if (typeof renderPackages === "function") {
-                renderPackages(maxActive);
-            }
-
-            // 2. Dashboard Header Rank update
-            const rankHeader = document.getElementById('current-rank-header');
-            if(rankHeader) {
-                rankHeader.innerText = maxActive >= 0 ? "G" + maxActive : "No Rank";
-            }
-
-        } catch (pkgErr) {
-            console.error("New Function Call Error:", pkgErr);
-            // Fallback: Agar ID exist karti hai toh G0 default
-            if (data.stats[0] > 0) { 
-                maxActive = 0;
-                window.userData.currentPackageId = 0;
-                if (typeof renderPackages === "function") renderPackages(0);
-            }
+        // Package Status Update
+        let maxActive = -1;
+        const activeStatusArray = await activeContract.getUserActivePackages(address);
+        for (let i = 0; i < 12; i++) {
+            if (activeStatusArray[i] === true) maxActive = i;
         }
+        
+        window.userData.currentPackageId = maxActive;
+        if (typeof renderPackages === "function") renderPackages(maxActive);
+
+        const rankHeader = document.getElementById('current-rank-header');
+        if(rankHeader) rankHeader.innerText = maxActive >= 0 ? "V" + (maxActive + 1) : "No Rank";
 
     } catch (e) { 
         console.error("Fetch Data Global Error:", e); 
