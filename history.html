@@ -118,12 +118,12 @@
         const userAddr = await window.signer.getAddress();
         tableBody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-yellow-500 orbitron text-xs">Syncing Ledger...</td></tr>`;
 
-        // 1. Fetch Total Stats Safely
+        // 1. Fetch Total Stats
         const userData = await window.contract.getUserTotalData(userAddr);
         const totalEarnedRaw = userData.stats[2] || "0";
-        totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(totalEarnedRaw)).toFixed(2)}`;
+        totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(totalEarnedRaw.toString())).toFixed(2)}`;
 
-        // 2. Fetch History Array
+        // 2. Fetch History from Contract
         const history = await window.contract.getUserIncomeHistory(userAddr);
 
         if (!history || history.length === 0) {
@@ -135,48 +135,47 @@
         noData.classList.add('hidden');
         let tableHTML = "";
         
+        // कॉन्ट्रैक्ट के Struct के अनुसार डेटा मैपिंग
         for (let i = history.length - 1; i >= 0; i--) {
             const record = history[i];
-            
-            // --- सबसे सुरक्षित तरीका: सीधे BigNumber चेक करें ---
-            
-            // Amount Handling (18 Decimals)
-            let rawAmt = "0";
-            if (record.amount) rawAmt = record.amount;
-            else if (record[0]) rawAmt = record[0];
-            const amt = ethers.utils.formatEther(rawAmt.toString()); // toString() लगाना जरूरी है
 
-            // Income Type (छोटा नंबर है, फिर भी सुरक्षित तरीके से)
-            let typeKey = 0;
-            let rawType = record.incomeType || record[1] || 0;
-            typeKey = Number(rawType.toString()); // .toNumber() के बजाय Number() इस्तेमाल करें
-
-            // Timestamp
-            let timestamp = 0;
-            let rawTime = record.time || record[2] || 0;
-            timestamp = Number(rawTime.toString());
-
-            // From User
-            const fromUser = record.fromUser || record[3] || "0x0000000000000000000000000000000000000000";
+            // --- CONTRACT STRUCT MAPPING ---
+            // 0: amount, 1: incomeType, 2: time, 3: from, 4: packageId
             
-            // Package ID
-            let packageId = 0;
-            let rawPkg = record.packageId || record[4] || 0;
-            packageId = Number(rawPkg.toString());
+            const rawAmt = record[0] || record.amount || "0";
+            const amtUSDT = ethers.utils.formatEther(rawAmt.toString()); 
 
-            const typeInfo = INCOME_TYPES[typeKey] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
+            const rawType = record[1] || record.incomeType || 0;
+            const typeKey = Number(rawType.toString());
             
-            const displayFrom = (fromUser === "0x0000000000000000000000000000000000000000" || fromUser === "System") 
+            const rawTime = record[2] || record.time || 0;
+            const timestamp = Number(rawTime.toString());
+            
+            const fromAddr = record[3] || record.from || "0x0000000000000000000000000000000000000000";
+            
+            const rawPkg = record[4] || record.packageId || 0;
+            const packageId = Number(rawPkg.toString());
+
+            // --- UI LOGIC ---
+            // INCOME_TYPES मैपिंग (आपके कॉन्ट्रैक्ट के टाइप के अनुसार)
+            const typeInfo = INCOME_TYPES[typeKey] || { label: "Other Income", color: "bg-gray-500/20 text-gray-400" };
+            
+            // System vs User Address logic
+            const displayFrom = (fromAddr === "0x0000000000000000000000000000000000000000" || fromAddr === "System") 
                                 ? "System" 
-                                : `${fromUser.substring(0, 6)}...${fromUser.substring(38)}`;
+                                : `${fromAddr.substring(0, 6)}...${fromAddr.substring(38)}`;
 
             tableHTML += `
                 <tr class="income-row border-b border-white/5 transition-colors">
                     <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
-                    <td class="px-6 py-5"><span class="type-badge ${typeInfo.color}">${typeInfo.label}</span></td>
+                    <td class="px-6 py-5">
+                        <span class="type-badge ${typeInfo.color}">${typeInfo.label}</span>
+                    </td>
                     <td class="px-6 py-5 font-mono text-gray-400 text-[11px]">${displayFrom}</td>
-                    <td class="px-6 py-5"><span class="bg-white/5 px-2 py-1 rounded text-white text-[10px] font-bold">PKG ${packageId}</span></td>
-                    <td class="px-6 py-5 font-bold text-yellow-500">${parseFloat(amt).toFixed(2)} USDT</td>
+                    <td class="px-6 py-5">
+                        <span class="bg-white/5 px-2 py-1 rounded text-white text-[10px] font-bold">PKG ${packageId}</span>
+                    </td>
+                    <td class="px-6 py-5 font-bold text-yellow-500">${parseFloat(amtUSDT).toFixed(2)} USDT</td>
                     <td class="px-6 py-5 text-gray-400 text-[11px]">${new Date(timestamp * 1000).toLocaleString()}</td>
                     <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
                 </tr>
@@ -184,14 +183,11 @@
         }
         
         tableBody.innerHTML = tableHTML;
-        lucide.createIcons();
+        if(window.lucide) lucide.createIcons();
 
     } catch (err) {
-        console.error("Report Error:", err);
-        // अगर फिर भी एरर आये तो यहाँ दिखेगा
-        tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs italic font-semibold">
-            Error: ${err.message.includes('overflow') ? "Numeric Overflow (BigInt)" : "Sync Failed"}
-        </td></tr>`;
+        console.error("Report Sync Error:", err);
+        tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs">Failed to load ledger. Check Console.</td></tr>`;
     }
 }
 
