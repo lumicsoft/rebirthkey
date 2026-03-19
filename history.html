@@ -110,99 +110,90 @@
     }
 
     async function loadIncomeHistory() {
-        const tableBody = document.getElementById('income-table-body');
-        const noData = document.getElementById('no-data');
-        const totalVal = document.getElementById('total-val');
-        
-        try {
-            const userAddr = await window.signer.getAddress();
-            tableBody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-yellow-500 orbitron text-xs">Syncing Ledger...</td></tr>`;
+    const tableBody = document.getElementById('income-table-body');
+    const noData = document.getElementById('no-data');
+    const totalVal = document.getElementById('total-val');
+    
+    try {
+        const userAddr = await window.signer.getAddress();
+        tableBody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-yellow-500 orbitron text-xs">Syncing Ledger...</td></tr>`;
 
-            // 1. Fetch Total Stats Safely
-            const userData = await window.contract.getUserTotalData(userAddr);
-            const totalEarnedRaw = userData.stats[2] || "0";
-            totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(totalEarnedRaw)).toFixed(2)}`;
+        // 1. Fetch Total Stats Safely
+        const userData = await window.contract.getUserTotalData(userAddr);
+        const totalEarnedRaw = userData.stats[2] || "0";
+        totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(totalEarnedRaw)).toFixed(2)}`;
 
-            // 2. Fetch History Array
-            const history = await window.contract.getUserIncomeHistory(userAddr);
+        // 2. Fetch History Array
+        const history = await window.contract.getUserIncomeHistory(userAddr);
 
-            if (!history || history.length === 0) {
-                tableBody.innerHTML = "";
-                noData.classList.remove('hidden');
-                return;
-            }
-
-            noData.classList.add('hidden');
-            let tableHTML = "";
-            
-            // Latest transactions first
-            for (let i = history.length - 1; i >= 0; i--) {
-                const record = history[i];
-                
-                // --- DATA EXTRACTION WITH FALLBACKS ---
-                // Amount handling (Never use .toNumber())
-                const rawAmt = record.amount || record[0] || "0";
-                const amt = ethers.utils.formatEther(rawAmt); 
-
-                // Income Type handling
-                const rawType = record.incomeType || record[1] || 0;
-                const typeKey = (rawType._isBigNumber) ? rawType.toNumber() : Number(rawType);
-                
-                // Timestamp handling
-                const rawTime = record.time || record[2] || 0;
-                const timestamp = (rawTime._isBigNumber) ? rawTime.toNumber() : Number(rawTime);
-                
-                // From User handling (Optional field in some versions)
-                const fromUser = record.fromUser || record[3] || ethers.constants.AddressZero;
-                
-                // Package ID handling
-                const rawPkg = record.packageId || record[4] || 0;
-                const packageId = (rawPkg._isBigNumber) ? rawPkg.toNumber() : Number(rawPkg);
-
-                // --- UI FORMATTING ---
-                const typeInfo = INCOME_TYPES[typeKey] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
-                
-                const displayFrom = (fromUser === ethers.constants.AddressZero || fromUser === "System") 
-                                    ? "System" 
-                                    : `${fromUser.substring(0, 6)}...${fromUser.substring(38)}`;
-
-                const dateStr = timestamp > 0 
-                                ? new Date(timestamp * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) 
-                                : "Pending...";
-
-                tableHTML += `
-                    <tr class="income-row border-b border-white/5 transition-colors">
-                        <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
-                        <td class="px-6 py-5">
-                            <span class="type-badge ${typeInfo.color}">${typeInfo.label}</span>
-                        </td>
-                        <td class="px-6 py-5 font-mono text-gray-400 text-[11px]">${displayFrom}</td>
-                        <td class="px-6 py-5">
-                            <span class="bg-white/5 px-2 py-1 rounded text-white text-[10px] font-bold">
-                                ${packageId > 0 ? 'PKG ' + packageId : 'GLOBAL'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-5 font-bold text-yellow-500">${parseFloat(amt).toFixed(2)} USDT</td>
-                        <td class="px-6 py-5 text-gray-400 text-[11px]">${dateStr}</td>
-                        <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">
-                            <div class="flex items-center justify-end gap-1">
-                                <i data-lucide="check-circle-2" class="w-3 h-3"></i> SUCCESS
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            tableBody.innerHTML = tableHTML;
-            lucide.createIcons();
-
-        } catch (err) {
-            console.error("Report Error:", err);
-            tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs italic font-semibold">
-                Connection Syncing... Please wait or refresh.
-            </td></tr>`;
+        if (!history || history.length === 0) {
+            tableBody.innerHTML = "";
+            noData.classList.remove('hidden');
+            return;
         }
+
+        noData.classList.add('hidden');
+        let tableHTML = "";
+        
+        for (let i = history.length - 1; i >= 0; i--) {
+            const record = history[i];
+            
+            // --- सबसे सुरक्षित तरीका: सीधे BigNumber चेक करें ---
+            
+            // Amount Handling (18 Decimals)
+            let rawAmt = "0";
+            if (record.amount) rawAmt = record.amount;
+            else if (record[0]) rawAmt = record[0];
+            const amt = ethers.utils.formatEther(rawAmt.toString()); // toString() लगाना जरूरी है
+
+            // Income Type (छोटा नंबर है, फिर भी सुरक्षित तरीके से)
+            let typeKey = 0;
+            let rawType = record.incomeType || record[1] || 0;
+            typeKey = Number(rawType.toString()); // .toNumber() के बजाय Number() इस्तेमाल करें
+
+            // Timestamp
+            let timestamp = 0;
+            let rawTime = record.time || record[2] || 0;
+            timestamp = Number(rawTime.toString());
+
+            // From User
+            const fromUser = record.fromUser || record[3] || "0x0000000000000000000000000000000000000000";
+            
+            // Package ID
+            let packageId = 0;
+            let rawPkg = record.packageId || record[4] || 0;
+            packageId = Number(rawPkg.toString());
+
+            const typeInfo = INCOME_TYPES[typeKey] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
+            
+            const displayFrom = (fromUser === "0x0000000000000000000000000000000000000000" || fromUser === "System") 
+                                ? "System" 
+                                : `${fromUser.substring(0, 6)}...${fromUser.substring(38)}`;
+
+            tableHTML += `
+                <tr class="income-row border-b border-white/5 transition-colors">
+                    <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
+                    <td class="px-6 py-5"><span class="type-badge ${typeInfo.color}">${typeInfo.label}</span></td>
+                    <td class="px-6 py-5 font-mono text-gray-400 text-[11px]">${displayFrom}</td>
+                    <td class="px-6 py-5"><span class="bg-white/5 px-2 py-1 rounded text-white text-[10px] font-bold">PKG ${packageId}</span></td>
+                    <td class="px-6 py-5 font-bold text-yellow-500">${parseFloat(amt).toFixed(2)} USDT</td>
+                    <td class="px-6 py-5 text-gray-400 text-[11px]">${new Date(timestamp * 1000).toLocaleString()}</td>
+                    <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
+                </tr>
+            `;
+        }
+        
+        tableBody.innerHTML = tableHTML;
+        lucide.createIcons();
+
+    } catch (err) {
+        console.error("Report Error:", err);
+        // अगर फिर भी एरर आये तो यहाँ दिखेगा
+        tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs italic font-semibold">
+            Error: ${err.message.includes('overflow') ? "Numeric Overflow (BigInt)" : "Sync Failed"}
+        </td></tr>`;
     }
+}
 
     window.addEventListener('load', initPage);
     </script>
