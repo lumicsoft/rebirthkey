@@ -70,8 +70,7 @@
                             <th class="px-6 py-4 text-right">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="income-table-body" class="text-sm">
-                        </tbody>
+                    <tbody id="income-table-body" class="text-sm"></tbody>
                 </table>
                 <div id="no-data" class="hidden text-center py-20">
                     <i data-lucide="database" class="w-12 h-12 text-gray-700 mx-auto mb-4"></i>
@@ -84,7 +83,6 @@
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
     <script>
-    // Updated Income Types mapping based on your Smart Contract logic
     const INCOME_TYPES = {
         1: { label: "Direct Referral", color: "bg-blue-500/20 text-blue-400" },
         2: { label: "Level Matching", color: "bg-purple-500/20 text-purple-400" },
@@ -105,10 +103,7 @@
                 loadIncomeHistory();
             }
             attempts++;
-            if (attempts > 15) {
-                clearInterval(checkInit);
-                console.error("Web3 initialization timeout.");
-            }
+            if (attempts > 15) clearInterval(checkInit);
         }, 1000);
     }
 
@@ -121,12 +116,12 @@
             const userAddr = await window.signer.getAddress();
             tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center text-yellow-500 orbitron text-xs">Fetching blockchain logs...</td></tr>`;
 
-            // 1. Fetch Total Earnings
+            // 1. Fetch Stats
             const userData = await window.contract.getUserTotalData(userAddr);
             const totalEarned = ethers.utils.formatEther(userData.stats[2]);
             totalVal.innerText = `$${parseFloat(totalEarned).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-            // 2. Fetch History Array
+            // 2. Fetch History
             const history = await window.contract.getUserIncomeHistory(userAddr);
 
             if (!history || history.length === 0) {
@@ -138,19 +133,22 @@
             noData.classList.add('hidden');
             let tableHTML = "";
             
-            // Loop in reverse to show newest first
             for (let i = history.length - 1; i >= 0; i--) {
                 const record = history[i];
                 
-                // Safe data extraction (handles both object and array mapping)
+                // FIXED: Amount par toNumber() कभी नहीं करना (Overflow Fix)
                 const rawAmount = record.amount || record[0];
+                const amt = ethers.utils.formatEther(rawAmount);
+
+                // FIXED: Type और Time को सुरक्षित रूप से हैंडल करना
                 const rawType = record.incomeType || record[1];
                 const rawTime = record.time || record[2];
 
-                const amt = ethers.utils.formatEther(rawAmount);
-                const typeKey = typeof rawType === 'object' ? rawType.toNumber() : rawType;
+                const typeKey = (typeof rawType === 'object' && rawType.toNumber) ? rawType.toNumber() : Number(rawType);
+                const timestamp = (typeof rawTime === 'object' && rawTime.toNumber) ? rawTime.toNumber() : Number(rawTime);
+                
                 const type = INCOME_TYPES[typeKey] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
-                const date = new Date((typeof rawTime === 'object' ? rawTime.toNumber() : rawTime) * 1000).toLocaleString();
+                const date = new Date(timestamp * 1000).toLocaleString();
 
                 tableHTML += `
                     <tr class="income-row border-b border-white/5 transition-colors">
@@ -168,9 +166,7 @@
 
         } catch (err) {
             console.error("Report Error:", err);
-            tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500">
-                Failed to load data. Please ensure you are connected to the correct network and have the latest contract deployed.
-            </td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500 text-xs">Error: ${err.reason || "Data Sync Failed"}</td></tr>`;
         }
     }
 
