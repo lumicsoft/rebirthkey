@@ -83,18 +83,21 @@
 
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
-   <script>
+    <script>
+    // Updated Income Types mapping based on your Smart Contract logic
     const INCOME_TYPES = {
         1: { label: "Direct Referral", color: "bg-blue-500/20 text-blue-400" },
         2: { label: "Level Matching", color: "bg-purple-500/20 text-purple-400" },
         3: { label: "Single Leg", color: "bg-green-500/20 text-green-400" },
         4: { label: "Matrix Rebirth", color: "bg-yellow-500/20 text-yellow-500" },
         5: { label: "Daily Global", color: "bg-pink-500/20 text-pink-400" },
-        6: { label: "Reward Income", color: "bg-orange-500/20 text-orange-400" }
+        6: { label: "Reward Income", color: "bg-orange-500/20 text-orange-400" },
+        7: { label: "Released Held", color: "bg-red-500/20 text-red-400" },
+        8: { label: "Lunar Fund", color: "bg-cyan-500/20 text-cyan-400" },
+        9: { label: "Boxer Fund", color: "bg-indigo-500/20 text-indigo-400" }
     };
 
     async function initPage() {
-        // Wait for web3-handler to initialize signer and contract
         let attempts = 0;
         const checkInit = setInterval(() => {
             if (window.contract && window.signer) {
@@ -102,64 +105,76 @@
                 loadIncomeHistory();
             }
             attempts++;
-            if (attempts > 10) clearInterval(checkInit); // Stop after 10s
+            if (attempts > 15) {
+                clearInterval(checkInit);
+                console.error("Web3 initialization timeout.");
+            }
         }, 1000);
     }
 
     async function loadIncomeHistory() {
-    const tableBody = document.getElementById('income-table-body');
-    const noData = document.getElementById('no-data');
-    const totalVal = document.getElementById('total-val');
-    
-    try {
-        const userAddr = await window.signer.getAddress();
+        const tableBody = document.getElementById('income-table-body');
+        const noData = document.getElementById('no-data');
+        const totalVal = document.getElementById('total-val');
         
-        // UI Loading
-        tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center text-yellow-500">Loading Data...</td></tr>`;
+        try {
+            const userAddr = await window.signer.getAddress();
+            tableBody.innerHTML = `<tr><td colspan="5" class="py-20 text-center text-yellow-500 orbitron text-xs">Fetching blockchain logs...</td></tr>`;
 
-        // 1. Stats Update (Total Earnings)
-        const data = await window.contract.getUserTotalData(userAddr);
-        totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(data.stats[2])).toFixed(2)}`;
+            // 1. Fetch Total Earnings
+            const userData = await window.contract.getUserTotalData(userAddr);
+            const totalEarned = ethers.utils.formatEther(userData.stats[2]);
+            totalVal.innerText = `$${parseFloat(totalEarned).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-        // 2. Direct Array Fetch (Naya Function)
-        const history = await window.contract.getUserIncomeHistory(userAddr);
+            // 2. Fetch History Array
+            const history = await window.contract.getUserIncomeHistory(userAddr);
 
-        if (!history || history.length === 0) {
-            tableBody.innerHTML = "";
-            noData.classList.remove('hidden');
-            return;
+            if (!history || history.length === 0) {
+                tableBody.innerHTML = "";
+                noData.classList.remove('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+            let tableHTML = "";
+            
+            // Loop in reverse to show newest first
+            for (let i = history.length - 1; i >= 0; i--) {
+                const record = history[i];
+                
+                // Safe data extraction (handles both object and array mapping)
+                const rawAmount = record.amount || record[0];
+                const rawType = record.incomeType || record[1];
+                const rawTime = record.time || record[2];
+
+                const amt = ethers.utils.formatEther(rawAmount);
+                const typeKey = typeof rawType === 'object' ? rawType.toNumber() : rawType;
+                const type = INCOME_TYPES[typeKey] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
+                const date = new Date((typeof rawTime === 'object' ? rawTime.toNumber() : rawTime) * 1000).toLocaleString();
+
+                tableHTML += `
+                    <tr class="income-row border-b border-white/5 transition-colors">
+                        <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
+                        <td class="px-6 py-5"><span class="type-badge ${type.color}">${type.label}</span></td>
+                        <td class="px-6 py-5 font-bold text-white">${parseFloat(amt).toFixed(2)} USDT</td>
+                        <td class="px-6 py-5 text-gray-400 text-xs">${date}</td>
+                        <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
+                    </tr>
+                `;
+            }
+            
+            tableBody.innerHTML = tableHTML;
+            lucide.createIcons();
+
+        } catch (err) {
+            console.error("Report Error:", err);
+            tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500">
+                Failed to load data. Please ensure you are connected to the correct network and have the latest contract deployed.
+            </td></tr>`;
         }
-
-        noData.classList.add('hidden');
-        tableBody.innerHTML = "";
-        
-        // Reverse loop taaki latest income top par dikhe
-        for (let i = history.length - 1; i >= 0; i--) {
-            const record = history[i];
-            const amt = ethers.utils.formatEther(record.amount);
-            const type = INCOME_TYPES[record.incomeType.toNumber()] || { label: "Bonus", color: "bg-gray-500/20 text-gray-400" };
-            const date = new Date(record.time.toNumber() * 1000).toLocaleString();
-
-            const tr = document.createElement('tr');
-            tr.className = "income-row border-b border-white/5 transition-colors";
-            tr.innerHTML = `
-                <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
-                <td class="px-6 py-5"><span class="type-badge ${type.color}">${type.label}</span></td>
-                <td class="px-6 py-5 font-bold text-white">${parseFloat(amt).toFixed(2)} USDT</td>
-                <td class="px-6 py-5 text-gray-400 text-xs">${date}</td>
-                <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
-            `;
-            tableBody.appendChild(tr);
-        }
-        lucide.createIcons();
-
-    } catch (err) {
-        console.error("Report Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500">Error: Contract Function not found. Did you redeploy?</td></tr>`;
     }
-}
 
     window.addEventListener('load', initPage);
-</script>
+    </script>
 </body>
 </html>
