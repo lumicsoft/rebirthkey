@@ -31,6 +31,7 @@
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
+            display: inline-block;
         }
     </style>
 </head>
@@ -89,7 +90,7 @@
         1: { label: "Direct Referral", color: "bg-blue-500/20 text-blue-400" },
         2: { label: "Level Matching", color: "bg-purple-500/20 text-purple-400" },
         3: { label: "Single Leg", color: "bg-green-500/20 text-green-400" },
-        4: { label: "Matrix Rebirth", color: "bg-yellow-500/20 text-yellow-500" },
+        4: { label: "Matrix Income", color: "bg-yellow-500/20 text-yellow-500" },
         5: { label: "Daily Global", color: "bg-pink-500/20 text-pink-400" },
         6: { label: "Reward Income", color: "bg-orange-500/20 text-orange-400" },
         7: { label: "Released Held", color: "bg-red-500/20 text-red-400" },
@@ -105,95 +106,89 @@
                 loadIncomeHistory();
             }
             attempts++;
-            if (attempts > 15) clearInterval(checkInit);
+            if (attempts > 20) clearInterval(checkInit);
         }, 1000);
     }
 
     async function loadIncomeHistory() {
-    const tableBody = document.getElementById('income-table-body');
-    const noData = document.getElementById('no-data');
-    const totalVal = document.getElementById('total-val');
-    
-    try {
-        const userAddr = await window.signer.getAddress();
-        tableBody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-yellow-500 orbitron text-xs">Syncing Ledger...</td></tr>`;
-
-        // 1. Fetch Total Stats
-        const userData = await window.contract.getUserTotalData(userAddr);
-        const totalEarnedRaw = userData.stats[2] || "0";
-        totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(totalEarnedRaw.toString())).toFixed(2)}`;
-
-        // 2. Fetch History from Contract
-        const history = await window.contract.getUserIncomeHistory(userAddr);
-
-        if (!history || history.length === 0) {
-            tableBody.innerHTML = "";
-            noData.classList.remove('hidden');
-            return;
-        }
-
-        noData.classList.add('hidden');
-        let tableHTML = "";
+        const tableBody = document.getElementById('income-table-body');
+        const noData = document.getElementById('no-data');
+        const totalVal = document.getElementById('total-val');
         
-        for (let i = history.length - 1; i >= 0; i--) {
-            const record = history[i];
+        try {
+            const userAddr = await window.signer.getAddress();
+            tableBody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-yellow-500 orbitron text-xs animate-pulse">Fetching Secure Ledger...</td></tr>`;
 
-            // --- FIXED DATA MAPPING (Solidity Struct Order) ---
-            // record[0]: amount, record[1]: type, record[2]: time, record[3]: from, record[4]: packageId
-            
-            // Amount Handling
-            const rawAmt = (record[0] !== undefined) ? record[0].toString() : (record.amount ? record.amount.toString() : "0");
-            const amtUSDT = ethers.utils.formatEther(rawAmt);
+            // 1. Fetch Total Stats
+            const userData = await window.contract.getUserTotalData(userAddr);
+            const totalEarnedRaw = userData.stats[2] || "0";
+            totalVal.innerText = `$${parseFloat(ethers.utils.formatEther(totalEarnedRaw.toString())).toFixed(2)}`;
 
-            // Type Handling
-            const rawType = (record[1] !== undefined) ? record[1].toString() : (record.incomeType ? record.incomeType.toString() : "0");
-            const typeKey = parseInt(rawType);
-            
-            // Time Handling
-            const rawTime = (record[2] !== undefined) ? record[2].toString() : (record.time ? record.time.toString() : "0");
-            const timestamp = parseInt(rawTime);
-            const dateDisplay = timestamp > 0 ? new Date(timestamp * 1000).toLocaleString() : "Manual Entry";
-            
-            // From Address Handling
-            const fromAddr = record[3] || record.from || "0x0000000000000000000000000000000000000000";
-            
-            // Package ID Handling
-            const rawPkg = (record[4] !== undefined) ? record[4].toString() : (record.packageId ? record.packageId.toString() : "0");
-            const packageId = rawPkg;
+            // 2. Fetch History directly from Contract (Most Reliable)
+            const history = await window.contract.getUserIncomeHistory(userAddr);
 
-            // --- UI LOGIC ---
-            const typeInfo = INCOME_TYPES[typeKey] || { label: "System Reward", color: "bg-gray-500/20 text-gray-400" };
-            
-            const isSystem = (fromAddr === "0x0000000000000000000000000000000000000000" || fromAddr.length < 30);
-            const displayFrom = isSystem ? "System" : `${fromAddr.substring(0, 6)}...${fromAddr.substring(fromAddr.length - 4)}`;
+            if (!history || history.length === 0) {
+                tableBody.innerHTML = "";
+                noData.classList.remove('hidden');
+                return;
+            }
 
-            tableHTML += `
-                <tr class="income-row border-b border-white/5 transition-colors">
-                    <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
-                    <td class="px-6 py-5">
-                        <span class="type-badge ${typeInfo.color}">${typeInfo.label}</span>
-                    </td>
-                    <td class="px-6 py-5 font-mono text-gray-400 text-[11px]">${displayFrom}</td>
-                    <td class="px-6 py-5">
-                        <span class="bg-white/5 px-2 py-1 rounded text-white text-[10px] font-bold">PKG ${packageId}</span>
-                    </td>
-                    <td class="px-6 py-5 font-bold text-yellow-500">${parseFloat(amtUSDT).toFixed(2)} USDT</td>
-                    <td class="px-6 py-5 text-gray-400 text-[11px]">${dateDisplay}</td>
-                    <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
-                </tr>
-            `;
+            noData.classList.add('hidden');
+            let tableHTML = "";
+            
+            // Loop from newest to oldest
+            for (let i = history.length - 1; i >= 0; i--) {
+                const record = history[i];
+
+                // --- CONTRACT STRUCT MAPPING (Based on your .sol file) ---
+                // record[0]: amount (BigInt)
+                // record[1]: incomeType (BigInt)
+                // record[2]: time (BigInt)
+                // record[3]: from (Address)
+                // record[4]: packageId (BigInt)
+                
+                const rawAmt = record[0].toString();
+                const amtUSDT = ethers.utils.formatEther(rawAmt);
+
+                const typeKey = parseInt(record[1].toString());
+                const timestamp = parseInt(record[2].toString());
+                const fromAddr = record[3];
+                const packageId = record[4].toString();
+
+                // UI Formatting
+                const typeInfo = INCOME_TYPES[typeKey] || { label: "System Bonus", color: "bg-gray-500/20 text-gray-400" };
+                const dateDisplay = timestamp > 0 ? new Date(timestamp * 1000).toLocaleString() : "Syncing...";
+                
+                const isSystem = (fromAddr === "0x0000000000000000000000000000000000000000" || fromAddr.length < 30);
+                const displayFrom = isSystem ? "System" : `${fromAddr.substring(0, 6)}...${fromAddr.substring(fromAddr.length - 4)}`;
+
+                tableHTML += `
+                    <tr class="income-row border-b border-white/5 transition-colors">
+                        <td class="px-6 py-5 font-mono text-gray-500 text-xs">#${i + 1}</td>
+                        <td class="px-6 py-5">
+                            <span class="type-badge ${typeInfo.color}">${typeInfo.label}</span>
+                        </td>
+                        <td class="px-6 py-5 font-mono text-gray-400 text-[11px]">${displayFrom}</td>
+                        <td class="px-6 py-5">
+                            <span class="bg-white/5 px-2 py-1 rounded text-white text-[10px] font-bold uppercase">Package ${packageId}</span>
+                        </td>
+                        <td class="px-6 py-5 font-bold text-yellow-500">${parseFloat(amtUSDT).toLocaleString('en-US', {minimumFractionDigits: 2})} USDT</td>
+                        <td class="px-6 py-5 text-gray-400 text-[11px]">${dateDisplay}</td>
+                        <td class="px-6 py-5 text-right text-green-500 font-bold text-[10px]">SUCCESS</td>
+                    </tr>
+                `;
+            }
+            
+            tableBody.innerHTML = tableHTML;
+            if(window.lucide) lucide.createIcons();
+
+        } catch (err) {
+            console.error("Critical Mismatch Error:", err);
+            tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs">
+                Blockchain Sync Failed. Please refresh or check your wallet connection.
+            </td></tr>`;
         }
-        
-        tableBody.innerHTML = tableHTML;
-        if(window.lucide) lucide.createIcons();
-
-    } catch (err) {
-        console.error("Report Sync Error:", err);
-        tableBody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-500 text-xs italic">
-            Connection Busy. Please refresh the page.
-        </td></tr>`;
     }
-}
 
     window.addEventListener('load', initPage);
     </script>
