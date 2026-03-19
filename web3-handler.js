@@ -369,22 +369,31 @@ window.showHistory = async function(type) {
 window.getIncomeHistory = async (userAddress) => {
     try {
         const activeContract = window.contract || contract;
-        const filter = activeContract.filters.IncomeReceived(userAddress);
         
-        // Block range 20,000 is good for BSC Testnet
-        const events = await activeContract.queryFilter(filter, -20000, 'latest');
+        // SAFE & RELIABLE: इवेंट्स के बजाय सीधे कॉन्ट्रैक्ट से डेटा लें
+        // यह आपके 'getUserIncomeHistory' फंक्शन को कॉल करेगा जो सबसे सटीक है
+        const historyData = await activeContract.getUserIncomeHistory(userAddress);
         
-        const history = events.map(e => ({
-            // SAFE: Always use formatEther for BigNumbers
-            amount: ethers.utils.formatEther(e.args.amount || "0"), 
-            // SAFE: Protective check before toNumber
-            incomeType: (e.args.incomeType._isBigNumber) ? e.args.incomeType.toNumber() : Number(e.args.incomeType),
-            id: e.blockNumber 
-        }));
+        if (!historyData || historyData.length === 0) return [];
 
-        return history.reverse();
+        // डेटा को सही फॉर्मेट में मैप करें
+        const formattedHistory = historyData.map((record, index) => {
+            return {
+                // कॉन्ट्रैक्ट Struct: 0: amount, 1: type, 2: time, 3: from, 4: pkg
+                amount: ethers.utils.formatEther(record[0].toString()),
+                incomeType: Number(record[1].toString()),
+                time: Number(record[2].toString()),
+                from: record[3],
+                packageId: Number(record[4].toString()),
+                index: index + 1
+            };
+        });
+
+        // नए रिकॉर्ड्स को ऊपर दिखाने के लिए रिवर्स करें
+        return formattedHistory.reverse();
+        
     } catch (e) {
-        console.error("History fetch error:", e);
+        console.error("Web3 Handler History Error:", e);
         return [];
     }
 }
