@@ -369,21 +369,19 @@ window.showHistory = async function(type) {
 window.getIncomeHistory = async (userAddress) => {
     try {
         const activeContract = window.contract || contract;
-        
-        // Blockchain se user ke specific 'IncomeReceived' events nikalna
         const filter = activeContract.filters.IncomeReceived(userAddress);
         
-        // Block range ko thoda badha kar 15,000-20,000 blocks rakhein taaki purani history dikhe
+        // Block range 20,000 is good for BSC Testnet
         const events = await activeContract.queryFilter(filter, -20000, 'latest');
         
-        // Data ko readable format mein convert karna (Amount format ke saath)
         const history = events.map(e => ({
-            amount: format(e.args.amount), // Isko format karna zaroori hai display ke liye
-            incomeType: e.args.incomeType.toNumber(),
+            // SAFE: Always use formatEther for BigNumbers
+            amount: ethers.utils.formatEther(e.args.amount || "0"), 
+            // SAFE: Protective check before toNumber
+            incomeType: (e.args.incomeType._isBigNumber) ? e.args.incomeType.toNumber() : Number(e.args.incomeType),
             id: e.blockNumber 
         }));
 
-        // Latest income sabse upar dikhane ke liye reverse
         return history.reverse();
     } catch (e) {
         console.error("History fetch error:", e);
