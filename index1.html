@@ -44,23 +44,8 @@
 
         .price-tag {
             font-size: 1.8rem; font-weight: 900; color: white;
-            font-family: 'Orbitron', sans-serif; margin-bottom: 5px;
+            font-family: 'Orbitron', sans-serif; margin-bottom: 15px;
             display: block;
-        }
-
-        /* Rebirth Badge Style */
-        .rebirth-badge {
-            display: inline-block;
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            font-size: 9px;
-            font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .btn-buy-elite {
@@ -205,7 +190,6 @@
     <script>
         lucide.createIcons();
 
-        // Data updated with rebirth value
         const packageData = [
             { id: 0, name: "G0", price: 5, rebirth: 1 }, 
             { id: 1, name: "G1", price: 44, rebirth: 5 }, 
@@ -231,7 +215,6 @@
                 return `
                 <div class="package-card ${isActive ? 'active-card' : ''}">
                     <span class="price-tag">$${pkg.price}</span>
-                    <div class="rebirth-badge">REBIRTH: ${pkg.rebirth}</div>
 
                     ${isActive ? 
                         `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-elite orbitron">REBUY</button>` : 
@@ -241,6 +224,11 @@
                     <div class="meta-info-line">
                         <span class="text-gray-500">Tier</span>
                         <span class="text-white orbitron">${pkg.name}</span>
+                    </div>
+
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Rebirth Value</span>
+                        <span class="text-yellow-500 orbitron">${pkg.rebirth}</span>
                     </div>
 
                     <div class="meta-info-line">
