@@ -209,8 +209,22 @@
             const container = document.getElementById('package-grid');
             if(!container) return;
 
+            // 1. Pehle user ka address nikalte hain rebirth fetch karne ke liye
+            let rebirthCounts = {};
+            if (window.signer && window.contract) {
+                try {
+                    const addr = await window.signer.getAddress();
+                    // Sabhi packages ke liye ek saath counts fetch karne ka wait karte hain
+                    const counts = await Promise.all(
+                        packageData.map(pkg => window.contract.rebirthCount(addr, pkg.id))
+                    );
+                    counts.forEach((c, index) => { rebirthCounts[index] = c.toString(); });
+                } catch (e) { console.log("Rebirth fetch error:", e); }
+            }
+
             container.innerHTML = packageData.map(pkg => {
                 const isActive = activeLevelFromBlockchain >= pkg.id;
+                const count = rebirthCounts[pkg.id] || "0"; // Agar data nahi mila toh 0 dikhayega
                 
                 return `
                 <div class="package-card ${isActive ? 'active-card' : ''}">
@@ -229,6 +243,11 @@
                     <div class="meta-info-line">
                         <span class="text-gray-500">Rebirth Value</span>
                         <span class="text-yellow-500 orbitron">${pkg.rebirth}</span>
+                    </div>
+
+                    <div class="meta-info-line border-t border-yellow-500/20">
+                        <span class="text-gray-500">My Rebirths</span>
+                        <span class="text-cyan-400 orbitron font-bold">${count}</span>
                     </div>
 
                     <div class="meta-info-line">
