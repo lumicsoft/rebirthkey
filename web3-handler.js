@@ -487,49 +487,41 @@ window.loadSpecificMatrixNode = async function(pkgId, index) {
 window.getAllMatrixHistory = async function(userAddr, pkgId) {
     try {
         const activeContract = window.contract || contract;
-        
-        // 1. Pehle Latest Node fetch karein
         const lastNode = await activeContract.getLatestMatrixNode(userAddr, pkgId);
         
-        // Agar user matrix mein hi nahi hai (Index 0 hai aur owner address zero hai)
-        if (!lastNode || lastNode.ownerAddr === "0x0000000000000000000000000000000000000000") {
-            console.log("User not in this matrix package yet.");
-            return [];
-        }
+        if (!lastNode || lastNode.ownerAddr === "0x0000000000000000000000000000000000000000") return [];
 
-        // 2. Total Rebirths fetch karein
         const totalRebirthsBN = await activeContract.rebirthCount(userAddr, pkgId);
-        const totalRebirths = totalRebirthsBN.toNumber();
+        const totalRebirths = parseInt(totalRebirthsBN.toString());
         
         let history = [];
-        let latestIdx = lastNode.userMatrixIndex.toNumber();
+        let latestIdx = parseInt(lastNode.userMatrixIndex.toString());
         
-        // 3. Loop: Piche ki taraf (Latest se Shuru karke)
-        // Jitne rebirths hain, utne nodes piche jayenge
+        // Loop: Latest se piche ki taraf
+        // Hum total nodes (Rebirths + 1) fetch karenge
         for(let i = 0; i <= totalRebirths; i++) {
             const currentIdx = latestIdx - i;
-            
-            // Safety check: Index 0 se niche nahi jana chahiye
             if (currentIdx < 0) break; 
 
             try {
                 const details = await activeContract.getMatrixTree(pkgId, currentIdx);
+                
+                // Data verify karein ki ye node usi user ka hai
                 history.push({
                     index: currentIdx,
-                    filledCount: details.filledCount.toString(),
+                    filledCount: details.filledCount ? details.filledCount.toString() : "0",
                     slotA: details.slotA,
                     slotB: details.slotB,
-                    slotC: details.slotC
+                    slotC: details.slotC,
+                    owner: details.ownerAddr
                 });
             } catch (innerErr) {
-                console.warn("Could not fetch node at index:", currentIdx);
+                console.warn("Skip index:", currentIdx);
             }
         }
-        
-        console.log("History Fetched Successfully:", history);
         return history;
     } catch (e) {
-        console.error("Critical History Fetch Error:", e);
+        console.error("Fetch Error:", e);
         return [];
     }
 }
