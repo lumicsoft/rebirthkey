@@ -97,114 +97,123 @@
         }
 
         async function loadMatrixHistory() {
-            const pkgId = document.getElementById('pkg-selector').value;
-            const grid = document.getElementById('history-grid');
-            
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-20 opacity-50">
-                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
-                    <p class="orbitron text-xs text-yellow-500">Scanning Blockchain Data...</p>
-                </div>`;
-            lucide.createIcons();
+    const pkgId = document.getElementById('pkg-selector').value;
+    const grid = document.getElementById('history-grid');
+    
+    grid.innerHTML = `
+        <div class="col-span-full text-center py-20 opacity-50">
+            <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
+            <p class="orbitron text-xs text-yellow-500">Scanning Blockchain Data...</p>
+        </div>`;
+    if(window.lucide) lucide.createIcons();
 
-            try {
-                const history = await window.getAllMatrixHistory(myAddress, pkgId);
-                console.log("Rendering History Array:", history);
+    try {
+        const history = await window.getAllMatrixHistory(myAddress, pkgId);
+        grid.innerHTML = "";
 
-                grid.innerHTML = "";
-
-                if(!history || history.length === 0) {
-                    grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
-                        <p class="text-gray-500 orbitron text-xs uppercase">No History Found</p>
-                    </div>`;
-                    return;
-                }
-
-                // Render Newest to Oldest
-                history.forEach((node, index) => {
-                    // --- 100% Robust Mapping ---
-                    // Contract se aane wala data ya toh object hota hai ya array
-                    const idx = node.index !== undefined ? node.index : (node[0] !== undefined ? node[0] : index);
-                    
-                    // Filled count ko string mein badal kar parse karna takki BigNumber handle ho jaye
-                    let rawCount = node.filledCount !== undefined ? node.filledCount : (node[1] !== undefined ? node[1] : 0);
-                    const count = parseInt(rawCount.toString());
-
-                    const sA = node.slotA || node[2] || "0x0000000000000000000000000000000000000000";
-                    const sB = node.slotB || node[3] || "0x0000000000000000000000000000000000000000";
-                    const sC = node.slotC || node[4] || "0x0000000000000000000000000000000000000000";
-
-                    const isComplete = count >= 3;
-                    // Last element in array is the newest/active one if not complete
-                    const isActuallyActive = (index === history.length - 1) && !isComplete;
-                    const displayIdx = parseInt(idx.toString()) + 1;
-
-                    const card = document.createElement('div');
-                    card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`;
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-6">
-                            <div>
-                                <span class="text-[10px] ${isActuallyActive ? 'text-yellow-500' : 'text-gray-500'} font-black orbitron uppercase">
-                                    ${isActuallyActive ? 'Active Cycle' : 'Matrix Node'}
-                                </span>
-                                <h4 class="text-xl font-black orbitron">#${displayIdx}</h4>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Progress</span>
-                                <p class="text-[10px] font-bold ${isComplete ? 'text-green-500' : 'text-blue-400'}">
-                                    ${count}/3 Filled
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            ${renderSlot("Slot A", sA)}
-                            ${renderSlot("Slot B", sB)}
-                            ${renderSlot("Slot C", sC)}
-                        </div>
-
-                        <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-                            <span class="text-[9px] font-bold uppercase italic ${isActuallyActive ? 'text-yellow-500' : 'text-gray-600'}">
-                                ${isActuallyActive ? 'Current Active Node' : 'Closed Rebirth'}
-                            </span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[8px] font-bold ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500' : 'text-gray-600')}">
-                                    ${isComplete ? 'COMPLETED' : (isActuallyActive ? 'IN PROGRESS' : 'CLOSED')}
-                                </span>
-                                <i data-lucide="${isComplete ? 'check-circle-2' : (isActuallyActive ? 'refresh-cw' : 'lock')}" 
-                                   class="w-4 h-4 ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500 animate-spin-slow' : 'text-gray-600')}"></i>
-                            </div>
-                        </div>
-                    `;
-                    grid.prepend(card);
-                });
-
-                lucide.createIcons();
-            } catch(e) {
-                console.error("UI Render Error:", e);
-                grid.innerHTML = `<p class="text-red-500 text-center col-span-full py-10">Render Error. Check Console.</p>`;
-            }
+        if(!history || history.length === 0) {
+            grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                <p class="text-gray-500 orbitron text-xs uppercase">No History Found</p>
+            </div>`;
+            return;
         }
 
-        function renderSlot(label, addr) {
-            // Address check for zero address
-            const isFilled = addr && 
-                             addr !== "0x0000000000000000000000000000000000000000" && 
-                             addr.toLowerCase() !== "0x0000000000000000000000000000000000000000";
+        // Render Newest to Oldest (using reverse for display)
+        const displayHistory = [...history].reverse();
+
+        displayHistory.forEach((node, revIdx) => {
+            // Ethers.js BigNumber handling
+            const idx = node.index !== undefined ? node.index.toString() : node[0].toString();
             
-            return `
-                <div class="flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${isFilled ? 'border-yellow-500/20' : 'border-white/5'}">
-                    <div class="slot-circle ${isFilled ? 'slot-filled' : ''}"></div>
-                    <div class="flex-grow">
-                        <p class="text-[8px] text-gray-500 font-black uppercase">${label}</p>
-                        <p class="text-[10px] font-mono ${isFilled ? 'text-yellow-500' : 'text-gray-700'}">
-                            ${isFilled ? addr.substring(0,10)+"..."+addr.substring(addr.length - 4) : 'Awaiting Spillover...'}
+            // Addresses check (Slot A, B, C)
+            const sA = node.slotA || node[2];
+            const sB = node.slotB || node[3];
+            const sC = node.slotC || node[4];
+
+            // Count filled slots manually for 100% accuracy
+            let count = 0;
+            if (isAddressValid(sA)) count++;
+            if (isAddressValid(sB)) count++;
+            if (isAddressValid(sC)) count++;
+
+            const isComplete = count >= 3;
+            // Agar ye array ka sabse naya element hai aur complete nahi hai, toh active hai
+            const isActuallyActive = (revIdx === 0) && !isComplete;
+            const displayIdx = parseInt(idx) + 1;
+
+            const card = document.createElement('div');
+            card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`;
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <span class="text-[10px] ${isActuallyActive ? 'text-yellow-500' : 'text-gray-500'} font-black orbitron uppercase">
+                            ${isActuallyActive ? 'Active Cycle' : 'Matrix Node'}
+                        </span>
+                        <h4 class="text-xl font-black orbitron">#${displayIdx}</h4>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Progress</span>
+                        <p class="text-[10px] font-bold ${isComplete ? 'text-green-500' : 'text-blue-400'}">
+                            ${count}/3 Filled
                         </p>
                     </div>
                 </div>
-            `;
-        }
 
+                <div class="space-y-4">
+                    ${renderSlot("Slot A", sA)}
+                    ${renderSlot("Slot B", sB)}
+                    ${renderSlot("Slot C", sC)}
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+                    <span class="text-[9px] font-bold uppercase italic ${isActuallyActive ? 'text-yellow-500' : 'text-gray-600'}">
+                        ${isActuallyActive ? 'Current Active Node' : (isComplete ? 'Cycle Finished' : 'Pending Node')}
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-bold ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500' : 'text-gray-600')}">
+                            ${isComplete ? 'COMPLETED' : (isActuallyActive ? 'IN PROGRESS' : 'WAITING')}
+                        </span>
+                        <i data-lucide="${isComplete ? 'check-circle-2' : (isActuallyActive ? 'refresh-cw' : 'circle')}" 
+                           class="w-4 h-4 ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500 animate-spin-slow' : 'text-gray-600')}"></i>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        if(window.lucide) lucide.createIcons();
+    } catch(e) {
+        console.error("UI Render Error:", e);
+        grid.innerHTML = `<p class="text-red-500 text-center col-span-full py-10">Syncing Error. Please refresh.</p>`;
+    }
+}
+
+// Helper function to check valid address
+function isAddressValid(addr) {
+    if (!addr) return false;
+    if (addr === "0x0000000000000000000000000000000000000000") return false;
+    if (addr.toLowerCase() === "0x0000000000000000000000000000000000000000") return false;
+    return true;
+}
+
+function renderSlot(label, addr) {
+    const isFilled = isAddressValid(addr);
+    
+    return `
+        <div class="flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${isFilled ? 'border-yellow-500/20' : 'border-white/5'}">
+            <div class="slot-circle ${isFilled ? 'slot-filled' : ''}"></div>
+            <div class="flex-grow">
+                <div class="flex justify-between items-center">
+                    <p class="text-[8px] text-gray-500 font-black uppercase">${label}</p>
+                    ${isFilled ? '<span class="text-[7px] bg-green-500/20 text-green-500 px-1 rounded">FILLED</span>' : ''}
+                </div>
+                <p class="text-[10px] font-mono ${isFilled ? 'text-yellow-500' : 'text-gray-700'}">
+                    ${isFilled ? addr.substring(0,12)+"..."+addr.substring(addr.length - 4) : 'Awaiting Spillover...'}
+                </p>
+            </div>
+        </div>
+    `;
+}
         window.addEventListener('load', initPage);
     </script>
 </body>
