@@ -35,9 +35,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             
             <div class="hidden md:flex gap-4">
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='index1.html'">Dashboard</button>
-                <button class="gold-btn !py-2 !px-5" onclick="location.href='deposits.html'">Position</button>
-                <button class="gold-btn !py-2 !px-5" onclick="location.href='referral.html'">Referral</button>
-                <button class="gold-btn !py-2 !px-5" onclick="location.href='leadership.html'">Leadership</button>
+                <button class="gold-btn !py-2 !px-5" onclick="location.href='deposits.html'">My Tree</button>
+                <button class="gold-btn !py-2 !px-5" onclick="location.href='referral.html'">Rebirth</button>
+                <button class="gold-btn !py-2 !px-5" onclick="location.href='leadership.html'">My Team</button>
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='history.html'">History</button>
             </div>
             
