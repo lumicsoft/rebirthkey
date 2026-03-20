@@ -28,6 +28,7 @@ const CONTRACT_ABI = [
     "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
     "event PackageBought(address indexed user, uint256 pkgId, uint256 amount)",
     "function getUserActivePackages(address _user) view returns (bool[12])",
+    "function getAllMatrixHistory(address _user, uint256 _pkgId) view returns (tuple(uint256 index, uint256 filledCount, address slotA, address slotB, address slotC)[])",
     "function getUserWithdrawHistory(address _user) external view returns (tuple(uint256 totalAmount, uint256 netAmount, uint256 fee, uint256 time)[])",
     "function getPendingIncomeDetails(address _user) public view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer)",
 ];
