@@ -20,7 +20,6 @@ const CONTRACT_ABI = [
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
     "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
     "function rebirthCount(address, uint256) view returns (uint256)",
-    "function getPendingIncomeDetails(address _user) view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer)",
    "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time, address from, uint256 packageId)[])",
     "function getUserTotalData(address _user) view returns (uint256[9] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
@@ -29,6 +28,8 @@ const CONTRACT_ABI = [
     "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
     "event PackageBought(address indexed user, uint256 pkgId, uint256 amount)",
     "function getUserActivePackages(address _user) view returns (bool[12])",
+    "function getUserWithdrawHistory(address _user) external view returns (tuple(uint256 totalAmount, uint256 netAmount, uint256 fee, uint256 time)[])",
+    "function getPendingIncomeDetails(address _user) public view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer)",
 ];
 
 const USDT_ABI = [
@@ -109,32 +110,36 @@ window.handleWithdraw = async function() {
         location.reload();
     } catch (err) { alert("Withdraw failed: " + (err.reason || err.message)); }
 }
-window.handleClaimIncomes = async function() {
+window.handleClaimRewards = async function() {
     try {
         const btn = document.getElementById('claim-btn');
-        if(btn) btn.innerText = "CLAIMING...";
-        
-        // Pehle check karein ki kuch pending hai ya nahi
-        const address = await signer.getAddress();
-        const pending = await contract.getPendingIncomeDetails(address);
-        const totalPending = pending.pendingDailyPool.add(pending.pendingLunar).add(pending.pendingBoxer);
-
-        if (totalPending.eq(0)) {
-            alert("No pending income to claim. New rewards generate after 12:00 AM IST.");
-            if(btn) btn.innerText = "CLAIM REWARDS";
-            return;
+        if(btn) { 
+            btn.disabled = true; 
+            btn.innerText = "PROCESSING..."; 
         }
 
-        const tx = await contract.claimAllIncomes();
+        // Exact function from your Part 2 code
+        const tx = await window.contract.claimAllIncomes();
+        console.log("Claiming rewards... TX:", tx.hash);
+        
         await tx.wait();
-        alert("Incomes claimed successfully!");
-        location.reload();
-    } catch (err) { 
-        alert("Claim failed: " + (err.reason || "Check if rewards are already claimed today.")); 
-        const btn = document.getElementById('claim-btn');
-        if(btn) btn.innerText = "CLAIM REWARDS";
+        
+        alert("Success! Rewards added to your main balance.");
+        
+        // Data Refresh
+        if(typeof fetchAllData === 'function') {
+            const address = await signer.getAddress();
+            await fetchAllData(address); 
+        }
+        await window.updatePendingRewardsUI();
+        
+    } catch (err) {
+        console.error("Claim Error:", err);
+        alert("Claim failed. Check console for details.");
+        window.updatePendingRewardsUI(); // Reset button state
     }
 }
+
 window.handleLogin = async function() {
     try {
         if (!window.ethereum) return alert("Please install MetaMask!");
@@ -582,6 +587,45 @@ async function fetchAllData(address) {
 
     } catch (e) { 
         console.error("Fetch Data Global Error:", e); 
+    }
+}
+// --- NEW: PENDING INCOME SYNC & UI UPDATE ---
+window.syncPendingRewards = async function() {
+    try {
+        const activeContract = window.contract || contract;
+        const address = await signer.getAddress();
+        
+        // Contract function call: getPendingIncomeDetails
+        const pending = await activeContract.getPendingIncomeDetails(address);
+        
+        // Ethers se readable format mein convert karein
+        const pDaily = parseFloat(ethers.utils.formatEther(pending.pendingDailyPool));
+        const pLunar = parseFloat(ethers.utils.formatEther(pending.pendingLunar));
+        const pBoxer = parseFloat(ethers.utils.formatEther(pending.pendingBoxer));
+        
+        const totalPending = pDaily + pLunar + pBoxer;
+
+        // UI Par values update karein
+        updateText('total-pending-val', totalPending.toFixed(2));
+        updateText('p-daily-small', pDaily.toFixed(2));
+        updateText('p-lunar-small', pLunar.toFixed(2));
+        updateText('p-boxer-small', pBoxer.toFixed(2));
+
+        // Claim Button Status logic
+        const claimBtn = document.getElementById('claim-btn');
+        if (claimBtn) {
+            if (totalPending <= 0) {
+                claimBtn.disabled = true;
+                claimBtn.innerText = "NO REWARDS";
+                claimBtn.classList.add('opacity-50', 'grayscale');
+            } else {
+                claimBtn.disabled = false;
+                claimBtn.innerText = "CLAIM ALL NOW";
+                claimBtn.classList.remove('opacity-50', 'grayscale');
+            }
+        }
+    } catch (e) {
+        console.error("Sync Pending Error:", e);
     }
 }
 // --- UTILS ---
