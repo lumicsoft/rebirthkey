@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --gold: #ffd700; --bg-dark: #060a08; --cyan: #00f2fe; }
+        :root { --gold: #ffd700; --bg-dark: #060a08; }
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg-dark); color: white; 
@@ -25,150 +25,167 @@
 
         .income-card {
             background: rgba(0,0,0,0.6); border: 1.5px solid var(--gold);
-            padding: 15px; border-radius: 18px; display: flex; align-items: center; gap: 12px;
-            position: relative; overflow: hidden;
+            padding: 20px; border-radius: 18px; display: flex; align-items: center; gap: 15px;
         }
 
-        .pending-badge {
-            font-size: 8px; font-weight: 800; color: #666;
-            text-transform: uppercase; margin-top: 2px; display: block;
-        }
-
-        /* --- PACKAGE CARDS --- */
-        .package-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
         .package-card {
             background: linear-gradient(180deg, rgba(255,215,0,0.05) 0%, rgba(0,0,0,1) 100%);
-            border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 20px;
-            padding: 20px 12px; text-align: center; transition: 0.3s ease;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px 12px;
+            text-align: center;
+            transition: 0.3s ease;
+            position: relative;
         }
-        .package-card.active-card { border: 1.5px solid var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
-        .price-tag { font-size: 1.5rem; font-weight: 900; font-family: 'Orbitron'; margin-bottom: 10px; display: block; }
-
-        .btn-buy-elite { background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-weight: 900; border-radius: 8px; font-size: 10px; width: 100%; padding: 8px 4px; margin-bottom: 10px; }
-        .btn-rebuy-elite { background: transparent; border: 1px solid var(--gold); color: var(--gold); font-weight: 900; border-radius: 8px; font-size: 10px; width: 100%; padding: 8px 4px; margin-bottom: 10px; }
-
-        /* --- CLAIM SECTION --- */
-        .claim-zone {
-            background: linear-gradient(90deg, #000 0%, #0a1a14 100%);
-            border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 25px;
-        }
-        .btn-claim-master {
-            background: #1a1a1a; color: #444; border: 1px solid #333;
-            width: 100%; padding: 15px; border-radius: 12px; font-weight: 900;
-            transition: 0.4s; cursor: not-allowed;
-        }
-        .btn-claim-active {
-            background: linear-gradient(135deg, #00f2fe, #4facfe) !important;
-            color: black !important; border: none !important;
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4); cursor: pointer !important;
+        .package-card.active-card {
+            border: 1.5px solid var(--gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
         }
 
-        .meta-info-line { display: flex; justify-content: space-between; padding: 4px 0; font-size: 9px; border-top: 1px solid rgba(255,215,0,0.1); }
+        .price-tag {
+            font-size: 1.8rem; font-weight: 900; color: white;
+            font-family: 'Orbitron', sans-serif; margin-bottom: 12px;
+            display: block;
+        }
+
+        .btn-buy-elite {
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            color: black; font-weight: 900; border-radius: 8px;
+            font-size: 10px; text-transform: uppercase; width: 100%; 
+            padding: 8px 4px; margin-bottom: 15px; transition: 0.3s;
+        }
+        .btn-rebuy-elite {
+            background: transparent; border: 1px solid var(--gold);
+            color: var(--gold); font-weight: 900; border-radius: 8px;
+            font-size: 10px; text-transform: uppercase; width: 100%; 
+            padding: 8px 4px; margin-bottom: 15px; transition: 0.3s;
+        }
+        .btn-rebuy-elite:hover { background: var(--gold); color: black; }
+
+        .meta-info-line {
+            display: flex; justify-content: space-between;
+            padding: 6px 0; border-top: 1px solid rgba(255,215,0,0.1);
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+        }
+        .status-text-active { color: #22c55e; }
+        .status-text-pending { color: #ef4444; }
+
+        .icon-box { color: var(--gold); }
+
+        /* New Styles for Pending display */
+        .pending-text { font-size: 10px; color: #888; font-weight: bold; margin-top: 2px; }
+        .claim-section { 
+            background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent);
+            border-left: 4px solid var(--gold);
+        }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-20">
+
+    <script src="components.js"></script>
 
     <main class="max-w-7xl mx-auto px-4 pt-10">
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
             <div class="lg:col-span-2 gold-border-fixed p-6 flex flex-wrap items-center justify-between gap-6">
                 <div class="flex items-center gap-5">
-                    <div class="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500 flex items-center justify-center">
-                        <i data-lucide="shield-check" class="text-yellow-500 w-7 h-7"></i>
+                    <div class="w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500 flex items-center justify-center">
+                        <i data-lucide="shield-check" class="text-yellow-500 w-8 h-8"></i>
                     </div>
                     <div>
-                        <h2 id="wallet-address-display" class="text-lg font-black orbitron">Connecting...</h2>
-                        <div class="flex gap-4">
-                            <span id="user-id-display" class="text-[10px] font-bold text-yellow-500 orbitron">ID: #---</span>
-                            <span class="text-[9px] text-green-500 font-bold uppercase">● System Live</span>
+                        <h2 id="wallet-address-display" class="text-xl font-black orbitron text-white">Connecting...</h2>
+                        <div class="flex gap-4 mt-1">
+                            <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
+                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
                         </div>
                     </div>
                 </div>
-                <div class="text-center bg-white/5 px-6 py-2 rounded-xl border border-white/10">
-                    <p class="text-[8px] text-gray-500 uppercase font-black tracking-widest">Direct Team</p>
-                    <p id="direct-count" class="text-xl font-black orbitron">0</p>
+                <div class="text-center bg-yellow-500/5 px-6 py-2 rounded-xl border border-yellow-500/30">
+                    <p class="text-[9px] text-gray-500 uppercase font-black">Direct Partners</p>
+                    <p id="direct-count" class="text-2xl font-black orbitron">0</p>
                 </div>
             </div>
 
             <div class="gold-border-fixed p-6 flex flex-col justify-center">
-                <p class="text-[9px] text-yellow-500 font-black uppercase mb-2 tracking-tighter">Your Referral Link</p>
-                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
-                    <input id="refURL" type="text" readonly value="Waiting for wallet..." class="bg-transparent border-none outline-none w-full text-[9px] text-gray-400 font-mono">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-3 text-center tracking-widest">Your Referral Link</p>
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-yellow-500/30">
+                    <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono">
                     <button onclick="copyLink()" class="text-yellow-500 hover:scale-110 transition"><i data-lucide="copy" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </div>
 
-        <h3 class="orbitron font-black text-xs text-yellow-500 mb-6 tracking-[0.2em] uppercase">Collected Assets (Processed)</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-            <div class="income-card"><i data-lucide="users" class="w-5 h-5 text-yellow-500"></i> <div><p class="text-[8px] text-gray-500 uppercase font-bold">Direct Bonus</p><p id="direct-earnings" class="text-lg font-black orbitron">0.00</p></div></div>
-            <div class="income-card"><i data-lucide="layers" class="w-5 h-5 text-yellow-500"></i> <div><p class="text-[8px] text-gray-500 uppercase font-bold">Level Bonus</p><p id="level-earnings" class="text-lg font-black orbitron">0.00</p></div></div>
-            <div class="income-card"><i data-lucide="grid" class="w-5 h-5 text-yellow-500"></i> <div><p class="text-[8px] text-gray-500 uppercase font-bold">Matrix Bonus</p><p id="matrix-earnings" class="text-lg font-black orbitron">0.00</p></div></div>
-            
-            <div class="income-card border-cyan-500/30">
-                <i data-lucide="moon" class="w-5 h-5 text-cyan-400"></i> 
-                <div>
-                    <p class="text-[8px] text-gray-500 uppercase font-bold">Lunar Fund</p>
-                    <p id="lunar-fund" class="text-lg font-black orbitron text-cyan-400">0.00</p>
-                    <span class="pending-badge">Pending: <span id="p-lunar-val">0.00</span></span>
-                </div>
+        <div class="gold-border-fixed p-6 mb-10 claim-section flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+                <h3 class="orbitron font-black text-sm text-yellow-500 uppercase tracking-widest">Rewards Claim Center</h3>
+                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Total pending income available for collection</p>
             </div>
-            <div class="income-card border-yellow-500/30">
-                <i data-lucide="zap" class="w-5 h-5 text-yellow-500"></i> 
-                <div>
-                    <p class="text-[8px] text-gray-500 uppercase font-bold">Booster Fund</p>
-                    <p id="booster-fund" class="text-lg font-black orbitron text-yellow-500">0.00</p>
-                    <span class="pending-badge">Pending: <span id="p-boxer-val">0.00</span></span>
+            <div class="flex items-center gap-8">
+                <div class="text-center">
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Total Pending</p>
+                    <p id="total-pending-claim" class="text-2xl font-black orbitron text-white">0.00</p>
                 </div>
-            </div>
-            <div class="income-card">
-                <i data-lucide="globe" class="w-5 h-5 text-white"></i> 
-                <div>
-                    <p class="text-[8px] text-gray-500 uppercase font-bold">Daily Income</p>
-                    <p id="daily-earnings" class="text-lg font-black orbitron">0.00</p>
-                    <span class="pending-badge">Pending: <span id="p-daily-val">0.00</span></span>
-                </div>
+                <button onclick="handleClaimAll()" id="claim-btn" class="px-8 py-3 bg-yellow-500 text-black font-black orbitron text-xs rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed">CLAIM ALL</button>
             </div>
         </div>
 
-        <div class="claim-zone mb-12">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+        <h3 class="orbitron font-black text-xs text-yellow-500 mb-6 tracking-[0.2em] uppercase">Income Statistics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+            <div class="income-card"><i data-lucide="users" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Direct Income</p><p id="direct-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="layers" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Level Income</p><p id="level-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="grid" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Matrix Income</p><p id="matrix-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            
+            <div class="income-card"><i data-lucide="zap" class="icon-box"></i> 
                 <div>
-                    <h4 class="orbitron font-black text-cyan-400 text-sm tracking-widest uppercase mb-1">Pending Income Vault</h4>
-                    <p class="text-[10px] text-gray-500 font-bold">These rewards are waiting to be claimed into your main balance.</p>
-                </div>
-                <div class="w-full md:w-72">
-                    <div class="text-center mb-3">
-                        <span id="total-pending-main" class="text-3xl font-black orbitron text-white">0.00</span>
-                        <span class="text-xs font-bold text-gray-600">USDT</span>
-                    </div>
-                    <button id="claim-master-btn" onclick="handleClaimAll()" disabled class="btn-claim-master orbitron text-[11px] uppercase tracking-widest">
-                        Nothing to Claim
-                    </button>
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p>
+                    <p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p>
+                    <p class="pending-text">PENDING: <span id="p-booster">0.00</span></p>
                 </div>
             </div>
+            <div class="income-card"><i data-lucide="moon" class="icon-box"></i> 
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Lunar Fund</p>
+                    <p id="lunar-fund" class="text-xl font-black orbitron text-cyan-400">0.00</p>
+                    <p class="pending-text">PENDING: <span id="p-lunar">0.00</span></p>
+                </div>
+            </div>
+            <div class="income-card"><i data-lucide="globe" class="icon-box"></i> 
+                <div>
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Daily Income</p>
+                    <p id="daily-earnings" class="text-xl font-black orbitron">0.00</p>
+                    <p class="pending-text">PENDING: <span id="p-daily">0.00</span></p>
+                </div>
+            </div>
+
+            <div class="income-card"><i data-lucide="trending-up" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card"><i data-lucide="award" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Total Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
         </div>
 
         <div class="gold-border-fixed p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-10">
             <div class="flex-grow">
-                <p class="text-[10px] text-yellow-500 font-black uppercase mb-2">Available to Withdraw</p>
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-2">Available Balance</p>
                 <div class="flex items-baseline gap-3">
                     <span id="balance-large" class="text-6xl font-black orbitron">0.00</span>
                     <span class="text-xl text-gray-500 font-bold">USDT</span>
                 </div>
             </div>
-            <div class="w-full md:w-80">
-                <div class="mb-4 p-4 bg-red-500/10 border border-red-500/40 rounded-xl flex justify-between items-center">
-                    <p class="text-[9px] text-red-500 font-black uppercase">Holding (Capping)</p>
-                    <p id="held-income" class="text-lg font-black orbitron">0.00</p>
+            <div class="w-full md:w-80 text-right">
+                <div class="mb-4 p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-center">
+                    <p class="text-[10px] text-red-500 font-black uppercase tracking-widest mb-1">Hold Income</p>
+                    <div class="flex justify-center items-center gap-2">
+                        <span id="held-income" class="text-2xl font-black orbitron text-white">0.00</span>
+                        <span class="text-xs text-gray-600 font-bold">USDT</span>
+                    </div>
                 </div>
-                <button onclick="handleWithdraw()" class="w-full py-4 bg-yellow-500 text-black font-black orbitron rounded-xl shadow-lg shadow-yellow-500/20 hover:scale-[1.02] transition">Withdraw Now</button>
-                <p class="text-[8px] text-center mt-3 text-gray-500 font-bold uppercase">Capping Limit Left: <span id="income-cap" class="text-yellow-500">0.00 USDT</span></p>
+
+                <button onclick="handleWithdraw()" class="btn-action !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-weight: 900; border-radius: 10px; width: 100%;">Withdraw Now</button>
+                <p class="text-[10px] font-bold text-gray-500 uppercase">Capping Left: <span id="income-cap" class="text-yellow-500">0.00 USDT</span></p>
             </div>
         </div>
 
-        <h3 class="orbitron font-black text-xl text-white mb-8 border-l-4 border-yellow-500 pl-4 uppercase">Investment Packages</h3>
-        <div id="package-grid" class="package-grid mb-20"></div>
+        <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
+        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"></div>
 
     </main>
 
@@ -176,7 +193,6 @@
     <script>
         lucide.createIcons();
 
-        // --- RENDER PACKAGES ---
         const packageData = [
             { id: 0, name: "G0", price: 5 }, { id: 1, name: "G1", price: 44 }, 
             { id: 2, name: "G2", price: 65 }, { id: 3, name: "G3", price: 106 }, 
@@ -186,91 +202,102 @@
             { id: 10, name: "G10", price: 10273 }, { id: 11, name: "G11", price: 20514 }
         ];
 
-        async function renderPackages(activeLevel = -1) {
+        async function renderPackages(activeLevelFromBlockchain = -1) {
             const container = document.getElementById('package-grid');
             if(!container) return;
+
             container.innerHTML = packageData.map(pkg => {
-                const isActive = activeLevel >= pkg.id;
+                const isActive = activeLevelFromBlockchain >= pkg.id;
+                
                 return `
                 <div class="package-card ${isActive ? 'active-card' : ''}">
                     <span class="price-tag">$${pkg.price}</span>
-                    <button onclick="handleBuyPackage(${pkg.id})" class="${isActive ? 'btn-rebuy-elite' : 'btn-buy-elite'} orbitron">
-                        ${isActive ? 'REBUY' : 'BUY NOW'}
-                    </button>
-                    <div class="meta-info-line"><span class="text-gray-500">ID</span><span class="text-white">${pkg.name}</span></div>
-                    <div class="meta-info-line"><span class="text-gray-500">Status</span><span class="${isActive?'text-green-500':'text-red-500'}">${isActive?'Active':'Locked'}</span></div>
-                </div>`;
+
+                    ${isActive ? 
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-elite orbitron">REBUY</button>` : 
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-buy-elite orbitron">BUY NOW</button>`
+                    }
+
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Package</span>
+                        <span class="text-white orbitron">${pkg.name}</span>
+                    </div>
+
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Status</span>
+                        <span class="${isActive ? 'status-text-active' : 'status-text-pending'}">
+                            ${isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                </div>
+                `;
             }).join('');
-        }
-
-        // --- GLOBAL SYNC LOGIC ---
-        async function syncPendingRewards() {
-            if(!window.contract || !window.signer) return;
-            try {
-                const address = await signer.getAddress();
-                const pending = await window.contract.getPendingIncomeDetails(address);
-                
-                const pDaily = parseFloat(ethers.utils.formatEther(pending[0]));
-                const pLunar = parseFloat(ethers.utils.formatEther(pending[1]));
-                const pBoxer = parseFloat(ethers.utils.formatEther(pending[2]));
-                const total = pDaily + pLunar + pBoxer;
-
-                // Update small badges
-                document.getElementById('p-daily-val').innerText = pDaily.toFixed(2);
-                document.getElementById('p-lunar-val').innerText = pLunar.toFixed(2);
-                document.getElementById('p-boxer-val').innerText = pBoxer.toFixed(2);
-                
-                // Update Main Claim Panel
-                const totalDisplay = document.getElementById('total-pending-main');
-                const claimBtn = document.getElementById('claim-master-btn');
-                
-                totalDisplay.innerText = total.toFixed(2);
-                
-                if(total > 0) {
-                    claimBtn.disabled = false;
-                    claimBtn.innerText = `CLAIM ${total.toFixed(2)} USDT`;
-                    claimBtn.classList.add('btn-claim-active');
-                    totalDisplay.classList.add('text-cyan-400');
-                } else {
-                    claimBtn.disabled = true;
-                    claimBtn.innerText = "Nothing to Claim";
-                    claimBtn.classList.remove('btn-claim-active');
-                }
-            } catch(e) { console.error("Sync Error:", e); }
-        }
-
-        async function handleClaimAll() {
-            const btn = document.getElementById('claim-master-btn');
-            try {
-                btn.disabled = true;
-                btn.innerText = "TX PENDING...";
-                const tx = await window.contract.claimAllIncomes();
-                await tx.wait();
-                alert("Rewards Successfully Collected!");
-                location.reload();
-            } catch(e) {
-                alert("Claim failed. Ensure you have gas and try again.");
-                syncPendingRewards();
-            }
+            lucide.createIcons();
         }
 
         function copyLink() {
-            const val = document.getElementById('refURL').value;
-            if(val.includes("Waiting")) return;
-            navigator.clipboard.writeText(val);
-            alert("Referral Link Copied!");
+            const refInput = document.getElementById('refURL');
+            if (refInput.value.includes("Syncing") || !refInput.value) return;
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+            alert("Referral link copied!");
         }
 
-        // Data Loop
+        // --- NEW: SYNC PENDING DATA FROM WEB3 ---
+        async function syncPendingIncomes() {
+            if (!window.userData || !window.contract) return;
+            
+            try {
+                // Maan lete hain contract me getPendingIncomes function hai jo 3 values deta hai
+                // Agar aapka function name alag hai to web3-handler me update karein
+                const addr = await window.signer.getAddress();
+                const pendingData = await window.contract.getPendingIncomeDetails(addr);
+                
+                const daily = ethers.utils.formatEther(pendingData[0]);
+                const lunar = ethers.utils.formatEther(pendingData[1]);
+                const booster = ethers.utils.formatEther(pendingData[2]);
+                
+                document.getElementById('p-daily').innerText = daily;
+                document.getElementById('p-lunar').innerText = lunar;
+                document.getElementById('p-booster').innerText = booster;
+                
+                const total = parseFloat(daily) + parseFloat(lunar) + parseFloat(booster);
+                document.getElementById('total-pending-claim').innerText = total.toFixed(2);
+                
+                document.getElementById('claim-btn').disabled = total <= 0;
+            } catch (e) {
+                console.log("Pending data fetch error:", e);
+            }
+        }
+
+        async function handleClaimAll() {
+            try {
+                const tx = await window.contract.claimAllIncomes();
+                await tx.wait();
+                alert("All incomes claimed successfully!");
+                location.reload();
+            } catch (e) {
+                alert("Claim failed!");
+            }
+        }
+
+        // --- REAL-TIME DATA SYNC ---
+        let lastKnownLevel = -99;
+
         window.addEventListener('load', () => {
-            renderPackages(-1);
+            renderPackages(-1); 
+            
             setInterval(() => {
-                if(window.userData) {
-                    const lvl = parseInt(window.userData.currentPackageId);
-                    renderPackages(lvl);
-                    syncPendingRewards();
+                if (window.userData && window.userData.currentPackageId !== undefined) {
+                    const currentLevel = parseInt(window.userData.currentPackageId);
+                    
+                    if (currentLevel !== lastKnownLevel) {
+                        lastKnownLevel = currentLevel;
+                        renderPackages(currentLevel);
+                    }
+                    syncPendingIncomes();
                 }
-            }, 3000);
+            }, 2000);
         });
     </script>
 </body>
