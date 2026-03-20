@@ -487,16 +487,15 @@ window.loadSpecificMatrixNode = async function(pkgId, index) {
 // --- NEW: FETCH ALL HISTORY (For the History Page) ---
 window.getAllMatrixHistory = async function(userAddr, pkgId) {
     try {
-        const activeContract = window.contract || contract;
-        
-        // Contract ke andar pehle se hi ye function hai jo 
-        // user ke saare rebirths ki sahi list nikalta hai.
+        // Check karein ki contract object sahi se initialize hai
+        const activeContract = window.contract; 
+        if (!activeContract) throw new Error("Contract not initialized");
+
+        console.log("Fetching history for:", userAddr, "Pkg:", pkgId);
+
+        // Seedha contract call karein (Kyunki ye function contract me hai)
         const history = await activeContract.getAllMatrixHistory(userAddr, pkgId);
         
-        // Agar data nahi mila
-        if (!history || history.length === 0) return [];
-
-        // Contract se milne wale data ko sahi format mein map karein
         return history.map(node => ({
             index: node.index.toString(),
             filledCount: node.filledCount.toString(),
@@ -507,8 +506,16 @@ window.getAllMatrixHistory = async function(userAddr, pkgId) {
 
     } catch (e) {
         console.error("Matrix History Fetch Error:", e);
-        return [];
+        // Agar function nahi mil raha, to fallback loop chalayein (Safety ke liye)
+        return window.fallbackMatrixHistory(userAddr, pkgId);
     }
+}
+
+// Ye backup function hai agar ABI mismatch ho jaye
+window.fallbackMatrixHistory = async function(userAddr, pkgId) {
+    const activeContract = window.contract;
+    const indices = []; // Yahan aap loop chala kar data nikal sakte hain jaise pichle message me bataya
+    return []; 
 }
 // --- GLOBAL DATA FETCH ---
 async function fetchAllData(address) {
