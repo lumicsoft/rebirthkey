@@ -23,23 +23,24 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 215, 0, 0.1);
             border-radius: 20px;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .matrix-card:hover {
             border-color: var(--gold);
-            background: rgba(255, 215, 0, 0.05);
+            background: rgba(255, 215, 0, 0.07);
             transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
 
         .slot-circle {
-            width: 12px; height: 12px;
+            width: 10px; height: 10px;
             border-radius: 50%;
             background: #222;
         }
         .slot-filled {
             background: var(--gold);
-            box-shadow: 0 0 10px var(--gold);
+            box-shadow: 0 0 12px var(--gold);
         }
         .animate-spin-slow { animation: spin 3s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -54,28 +55,29 @@
         
         <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
             <div>
-                <h3 class="orbitron font-black text-2xl text-white border-l-4 border-yellow-500 pl-4 uppercase">Matrix <span class="text-yellow-500">History</span></h3>
-                <p class="text-[10px] text-gray-500 font-bold ml-5 mt-1 tracking-widest uppercase">All Rebirth Node Status</p>
+                <h3 class="orbitron font-black text-2xl text-white border-l-4 border-yellow-500 pl-4 uppercase tracking-tighter">Matrix <span class="text-yellow-500">History</span></h3>
+                <p class="text-[10px] text-gray-500 font-bold ml-5 mt-1 tracking-widest uppercase">Real-time Node Monitoring</p>
             </div>
             
             <div class="flex gap-4 w-full md:w-auto">
-                <div class="flex-grow md:w-48">
-                    <p class="text-[9px] text-gray-500 uppercase font-black mb-2">Select Package</p>
-                    <select id="pkg-selector" onchange="loadMatrixHistory()" class="w-full bg-black border border-yellow-500/30 text-yellow-500 text-xs p-2 rounded-lg outline-none">
-                        <option value="0">Package $5</option>
-                        <option value="1">Package $44</option>
-                        <option value="2">Package $65</option>
-                        <option value="3">Package $106</option>
-                        <option value="4">Package $187</option>
-                        <option value="5">Package $348</option>
-                        <option value="6">Package $669</option>
-                        <option value="7">Package $1310</option>
+                <div class="flex-grow md:w-56">
+                    <p class="text-[9px] text-gray-500 uppercase font-black mb-2 ml-1">Select Matrix Package</p>
+                    <select id="pkg-selector" onchange="loadMatrixHistory()" class="w-full bg-black/60 border border-yellow-500/30 text-yellow-500 text-xs p-3 rounded-xl outline-none cursor-pointer hover:border-yellow-500 transition-colors">
+                        <option value="0">Package $5 (G0)</option>
+                        <option value="1">Package $44 (G1)</option>
+                        <option value="2">Package $65 (G2)</option>
+                        <option value="3">Package $106 (G3)</option>
+                        <option value="4">Package $187 (G4)</option>
+                        <option value="5">Package $348 (G5)</option>
+                        <option value="6">Package $669 (G6)</option>
+                        <option value="7">Package $1310 (G7)</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
 
     </main>
 
@@ -84,11 +86,136 @@
     <script src="components.js"></script>
     <script src="web3-handler.js"></script>
     <script>
-        lucide.createIcons();
         let myAddress = "";
+
+        // Function 1: Check if address is valid (Non-Zero)
+        function isAddressValid(addr) {
+            if (!addr || addr === "" || addr === null) return false;
+            const zero = "0x0000000000000000000000000000000000000000";
+            return addr.toString().toLowerCase() !== zero;
+        }
+
+        // Function 2: Individual Slot Renderer
+        function renderSlot(label, addr) {
+            const isFilled = isAddressValid(addr);
+            return `
+                <div class="flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${isFilled ? 'border-yellow-500/20' : 'border-white/5'}">
+                    <div class="slot-circle ${isFilled ? 'slot-filled' : ''}"></div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <p class="text-[8px] text-gray-500 font-black uppercase">${label}</p>
+                            ${isFilled ? '<span class="text-[7px] bg-yellow-500/10 text-yellow-500 px-1.5 rounded border border-yellow-500/20 font-bold">FILLED</span>' : ''}
+                        </div>
+                        <p class="text-[10px] font-mono truncate ${isFilled ? 'text-yellow-500' : 'text-gray-700'}">
+                            ${isFilled ? addr.substring(0,14)+"..."+addr.substring(addr.length - 4) : 'Awaiting Spillover...'}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function 3: Main UI Loader
+        async function loadMatrixHistory() {
+            const pkgId = document.getElementById('pkg-selector').value;
+            const grid = document.getElementById('history-grid');
+            
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-20 bg-white/5 rounded-3xl border border-white/5">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
+                    <p class="orbitron text-xs text-yellow-500 tracking-widest">QUERYING BLOCKCHAIN...</p>
+                </div>`;
+            if(window.lucide) lucide.createIcons();
+
+            try {
+                // Fetch using web3-handler function
+                const history = await window.getAllMatrixHistory(myAddress, pkgId);
+                console.log("UI received history:", history);
+
+                grid.innerHTML = "";
+
+                if(!history || history.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
+                        <i data-lucide="folder-x" class="w-12 h-12 mx-auto mb-4 text-gray-700"></i>
+                        <p class="text-gray-500 orbitron text-xs uppercase">No Participation History in Package $${getPackagePrice(pkgId)}</p>
+                    </div>`;
+                    if(window.lucide) lucide.createIcons();
+                    return;
+                }
+
+                // Render Nodes
+                history.forEach((node, index) => {
+                    const nodeIdx = node.index !== undefined ? node.index.toString() : index.toString();
+                    const sA = node.slotA;
+                    const sB = node.slotB;
+                    const sC = node.slotC;
+
+                    // Calculate real progress
+                    let count = 0;
+                    if (isAddressValid(sA)) count++;
+                    if (isAddressValid(sB)) count++;
+                    if (isAddressValid(sC)) count++;
+
+                    const isComplete = count >= 3;
+                    const isActuallyActive = (index === 0) && !isComplete; // Logic: Pehla node active hai agar full nahi hai
+
+                    const card = document.createElement('div');
+                    card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`;
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="text-[9px] ${isActuallyActive ? 'text-yellow-500' : 'text-gray-500'} font-black orbitron uppercase">
+                                    ${isActuallyActive ? 'Live Node' : (isComplete ? 'Completed Cycle' : 'Archived Node')}
+                                </span>
+                                <h4 class="text-xl font-black orbitron text-white">#${parseInt(nodeIdx) + 1}</h4>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[9px] text-gray-500 font-black orbitron uppercase">Progress</span>
+                                <p class="text-[11px] font-black ${isComplete ? 'text-green-500' : 'text-blue-400'}">
+                                    ${count}/3 FILLED
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            ${renderSlot("Slot A", sA)}
+                            ${renderSlot("Slot B", sB)}
+                            ${renderSlot("Slot C", sC)}
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+                            <span class="text-[9px] font-bold uppercase ${isActuallyActive ? 'text-yellow-500' : 'text-gray-600'}">
+                                ID: ${nodeIdx}
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] font-black ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500 animate-pulse' : 'text-gray-600')}">
+                                    ${isComplete ? 'SUCCESS' : (isActuallyActive ? 'IN-PROGRESS' : 'CLOSED')}
+                                </span>
+                                <i data-lucide="${isComplete ? 'check-circle-2' : (isActuallyActive ? 'refresh-cw' : 'lock')}" 
+                                   class="w-4 h-4 ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500 animate-spin-slow' : 'text-gray-600')}"></i>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                if(window.lucide) lucide.createIcons();
+
+            } catch(e) {
+                console.error("Critical History Error:", e);
+                grid.innerHTML = `<div class="col-span-full text-center py-10 bg-red-500/10 rounded-2xl border border-red-500/20">
+                    <p class="text-red-500 orbitron text-[10px]">SYNC ERROR: ${e.message.substring(0, 50)}...</p>
+                </div>`;
+            }
+        }
+
+        function getPackagePrice(id) {
+            const prices = ["5", "44", "65", "106", "187", "348", "669", "1310"];
+            return prices[id] || "0";
+        }
 
         async function initPage() {
             if(!window.signer) {
+                console.log("Waiting for Signer...");
                 setTimeout(initPage, 1000);
                 return;
             }
@@ -96,124 +223,6 @@
             loadMatrixHistory();
         }
 
-        async function loadMatrixHistory() {
-    const pkgId = document.getElementById('pkg-selector').value;
-    const grid = document.getElementById('history-grid');
-    
-    grid.innerHTML = `
-        <div class="col-span-full text-center py-20 opacity-50">
-            <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-yellow-500"></i>
-            <p class="orbitron text-xs text-yellow-500">Scanning Blockchain Data...</p>
-        </div>`;
-    if(window.lucide) lucide.createIcons();
-
-    try {
-        const history = await window.getAllMatrixHistory(myAddress, pkgId);
-        grid.innerHTML = "";
-
-        if(!history || history.length === 0) {
-            grid.innerHTML = `<div class="col-span-full text-center py-20 bg-black/40 rounded-3xl border border-dashed border-gray-800">
-                <p class="text-gray-500 orbitron text-xs uppercase">No History Found</p>
-            </div>`;
-            return;
-        }
-
-        // Render Newest to Oldest (using reverse for display)
-        const displayHistory = [...history].reverse();
-
-        displayHistory.forEach((node, revIdx) => {
-            // Ethers.js BigNumber handling
-            const idx = node.index !== undefined ? node.index.toString() : node[0].toString();
-            
-            // Addresses check (Slot A, B, C)
-            const sA = node.slotA || node[2];
-            const sB = node.slotB || node[3];
-            const sC = node.slotC || node[4];
-
-            // Count filled slots manually for 100% accuracy
-            let count = 0;
-            if (isAddressValid(sA)) count++;
-            if (isAddressValid(sB)) count++;
-            if (isAddressValid(sC)) count++;
-
-            const isComplete = count >= 3;
-            // Agar ye array ka sabse naya element hai aur complete nahi hai, toh active hai
-            const isActuallyActive = (revIdx === 0) && !isComplete;
-            const displayIdx = parseInt(idx) + 1;
-
-            const card = document.createElement('div');
-            card.className = `matrix-card p-6 ${isActuallyActive ? 'border-yellow-500/50 bg-yellow-500/10' : ''}`;
-            card.innerHTML = `
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <span class="text-[10px] ${isActuallyActive ? 'text-yellow-500' : 'text-gray-500'} font-black orbitron uppercase">
-                            ${isActuallyActive ? 'Active Cycle' : 'Matrix Node'}
-                        </span>
-                        <h4 class="text-xl font-black orbitron">#${displayIdx}</h4>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[10px] text-gray-500 font-black orbitron uppercase">Progress</span>
-                        <p class="text-[10px] font-bold ${isComplete ? 'text-green-500' : 'text-blue-400'}">
-                            ${count}/3 Filled
-                        </p>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    ${renderSlot("Slot A", sA)}
-                    ${renderSlot("Slot B", sB)}
-                    ${renderSlot("Slot C", sC)}
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span class="text-[9px] font-bold uppercase italic ${isActuallyActive ? 'text-yellow-500' : 'text-gray-600'}">
-                        ${isActuallyActive ? 'Current Active Node' : (isComplete ? 'Cycle Finished' : 'Pending Node')}
-                    </span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-bold ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500' : 'text-gray-600')}">
-                            ${isComplete ? 'COMPLETED' : (isActuallyActive ? 'IN PROGRESS' : 'WAITING')}
-                        </span>
-                        <i data-lucide="${isComplete ? 'check-circle-2' : (isActuallyActive ? 'refresh-cw' : 'circle')}" 
-                           class="w-4 h-4 ${isComplete ? 'text-green-500' : (isActuallyActive ? 'text-yellow-500 animate-spin-slow' : 'text-gray-600')}"></i>
-                    </div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-
-        if(window.lucide) lucide.createIcons();
-    } catch(e) {
-        console.error("UI Render Error:", e);
-        grid.innerHTML = `<p class="text-red-500 text-center col-span-full py-10">Syncing Error. Please refresh.</p>`;
-    }
-}
-
-// Helper function to check valid address
-function isAddressValid(addr) {
-    if (!addr) return false;
-    if (addr === "0x0000000000000000000000000000000000000000") return false;
-    if (addr.toLowerCase() === "0x0000000000000000000000000000000000000000") return false;
-    return true;
-}
-
-function renderSlot(label, addr) {
-    const isFilled = isAddressValid(addr);
-    
-    return `
-        <div class="flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${isFilled ? 'border-yellow-500/20' : 'border-white/5'}">
-            <div class="slot-circle ${isFilled ? 'slot-filled' : ''}"></div>
-            <div class="flex-grow">
-                <div class="flex justify-between items-center">
-                    <p class="text-[8px] text-gray-500 font-black uppercase">${label}</p>
-                    ${isFilled ? '<span class="text-[7px] bg-green-500/20 text-green-500 px-1 rounded">FILLED</span>' : ''}
-                </div>
-                <p class="text-[10px] font-mono ${isFilled ? 'text-yellow-500' : 'text-gray-700'}">
-                    ${isFilled ? addr.substring(0,12)+"..."+addr.substring(addr.length - 4) : 'Awaiting Spillover...'}
-                </p>
-            </div>
-        </div>
-    `;
-}
         window.addEventListener('load', initPage);
     </script>
 </body>
