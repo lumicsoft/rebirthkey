@@ -44,8 +44,23 @@
 
         .price-tag {
             font-size: 1.8rem; font-weight: 900; color: white;
-            font-family: 'Orbitron', sans-serif; margin-bottom: 12px;
+            font-family: 'Orbitron', sans-serif; margin-bottom: 5px;
             display: block;
+        }
+
+        /* Rebirth Badge Style */
+        .rebirth-badge {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .btn-buy-elite {
@@ -71,8 +86,6 @@
         .status-text-pending { color: #ef4444; }
 
         .icon-box { color: var(--gold); }
-
-        /* New Styles for Pending display */
         .pending-text { font-size: 10px; color: #888; font-weight: bold; margin-top: 2px; }
         .claim-section { 
             background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent);
@@ -178,14 +191,13 @@
                         <span class="text-xs text-gray-600 font-bold">USDT</span>
                     </div>
                 </div>
-
                 <button onclick="handleWithdraw()" class="btn-action !py-5 text-lg shadow-xl shadow-yellow-500/10 mb-4" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-weight: 900; border-radius: 10px; width: 100%;">Withdraw Now</button>
                 <p class="text-[10px] font-bold text-gray-500 uppercase">Capping Left: <span id="income-cap" class="text-yellow-500">0.00 USDT</span></p>
             </div>
         </div>
 
-        <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4">INVESTMENT <span class="text-yellow-500">TIERS</span></h3>
-        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"></div>
+        <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4 uppercase">Investment Packages</h3>
+        <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-20"></div>
 
     </main>
 
@@ -193,13 +205,20 @@
     <script>
         lucide.createIcons();
 
+        // Data updated with rebirth value
         const packageData = [
-            { id: 0, name: "G0", price: 5 }, { id: 1, name: "G1", price: 44 }, 
-            { id: 2, name: "G2", price: 65 }, { id: 3, name: "G3", price: 106 }, 
-            { id: 4, name: "G4", price: 187 }, { id: 5, name: "G5", price: 348 }, 
-            { id: 6, name: "G6", price: 669 }, { id: 7, name: "G7", price: 1310 }, 
-            { id: 8, name: "G8", price: 2591 }, { id: 9, name: "G9", price: 5152 }, 
-            { id: 10, name: "G10", price: 10273 }, { id: 11, name: "G11", price: 20514 }
+            { id: 0, name: "G0", price: 5, rebirth: 1 }, 
+            { id: 1, name: "G1", price: 44, rebirth: 5 }, 
+            { id: 2, name: "G2", price: 65, rebirth: 10 }, 
+            { id: 3, name: "G3", price: 106, rebirth: 20 }, 
+            { id: 4, name: "G4", price: 187, rebirth: 40 }, 
+            { id: 5, name: "G5", price: 348, rebirth: 80 }, 
+            { id: 6, name: "G6", price: 669, rebirth: 160 }, 
+            { id: 7, name: "G7", price: 1310, rebirth: 320 }, 
+            { id: 8, name: "G8", price: 2591, rebirth: 640 }, 
+            { id: 9, name: "G9", price: 5152, rebirth: 1280 }, 
+            { id: 10, name: "G10", price: 10273, rebirth: 2560 }, 
+            { id: 11, name: "G11", price: 20514, rebirth: 5120 }
         ];
 
         async function renderPackages(activeLevelFromBlockchain = -1) {
@@ -212,6 +231,7 @@
                 return `
                 <div class="package-card ${isActive ? 'active-card' : ''}">
                     <span class="price-tag">$${pkg.price}</span>
+                    <div class="rebirth-badge">REBIRTH: ${pkg.rebirth}</div>
 
                     ${isActive ? 
                         `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-elite orbitron">REBUY</button>` : 
@@ -219,14 +239,14 @@
                     }
 
                     <div class="meta-info-line">
-                        <span class="text-gray-500">Package</span>
+                        <span class="text-gray-500">Tier</span>
                         <span class="text-white orbitron">${pkg.name}</span>
                     </div>
 
                     <div class="meta-info-line">
                         <span class="text-gray-500">Status</span>
                         <span class="${isActive ? 'status-text-active' : 'status-text-pending'}">
-                            ${isActive ? 'Active' : 'Inactive'}
+                            ${isActive ? 'Active' : 'Locked'}
                         </span>
                     </div>
                 </div>
@@ -243,16 +263,11 @@
             alert("Referral link copied!");
         }
 
-        // --- NEW: SYNC PENDING DATA FROM WEB3 ---
         async function syncPendingIncomes() {
             if (!window.userData || !window.contract) return;
-            
             try {
-                // Maan lete hain contract me getPendingIncomes function hai jo 3 values deta hai
-                // Agar aapka function name alag hai to web3-handler me update karein
                 const addr = await window.signer.getAddress();
                 const pendingData = await window.contract.getPendingIncomeDetails(addr);
-                
                 const daily = ethers.utils.formatEther(pendingData[0]);
                 const lunar = ethers.utils.formatEther(pendingData[1]);
                 const booster = ethers.utils.formatEther(pendingData[2]);
@@ -263,34 +278,24 @@
                 
                 const total = parseFloat(daily) + parseFloat(lunar) + parseFloat(booster);
                 document.getElementById('total-pending-claim').innerText = total.toFixed(2);
-                
                 document.getElementById('claim-btn').disabled = total <= 0;
-            } catch (e) {
-                console.log("Pending data fetch error:", e);
-            }
+            } catch (e) { console.log(e); }
         }
 
         async function handleClaimAll() {
             try {
                 const tx = await window.contract.claimAllIncomes();
                 await tx.wait();
-                alert("All incomes claimed successfully!");
-                location.reload();
-            } catch (e) {
-                alert("Claim failed!");
-            }
+                alert("Claimed!"); location.reload();
+            } catch (e) { alert("Failed!"); }
         }
 
-        // --- REAL-TIME DATA SYNC ---
         let lastKnownLevel = -99;
-
         window.addEventListener('load', () => {
             renderPackages(-1); 
-            
             setInterval(() => {
                 if (window.userData && window.userData.currentPackageId !== undefined) {
                     const currentLevel = parseInt(window.userData.currentPackageId);
-                    
                     if (currentLevel !== lastKnownLevel) {
                         lastKnownLevel = currentLevel;
                         renderPackages(currentLevel);
