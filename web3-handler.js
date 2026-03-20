@@ -487,41 +487,25 @@ window.loadSpecificMatrixNode = async function(pkgId, index) {
 window.getAllMatrixHistory = async function(userAddr, pkgId) {
     try {
         const activeContract = window.contract || contract;
-        const lastNode = await activeContract.getLatestMatrixNode(userAddr, pkgId);
         
-        if (!lastNode || lastNode.ownerAddr === "0x0000000000000000000000000000000000000000") return [];
+        // Contract ke andar pehle se hi ye function hai jo 
+        // user ke saare rebirths ki sahi list nikalta hai.
+        const history = await activeContract.getAllMatrixHistory(userAddr, pkgId);
+        
+        // Agar data nahi mila
+        if (!history || history.length === 0) return [];
 
-        const totalRebirthsBN = await activeContract.rebirthCount(userAddr, pkgId);
-        const totalRebirths = parseInt(totalRebirthsBN.toString());
-        
-        let history = [];
-        let latestIdx = parseInt(lastNode.userMatrixIndex.toString());
-        
-        // Loop: Latest se piche ki taraf
-        // Hum total nodes (Rebirths + 1) fetch karenge
-        for(let i = 0; i <= totalRebirths; i++) {
-            const currentIdx = latestIdx - i;
-            if (currentIdx < 0) break; 
+        // Contract se milne wale data ko sahi format mein map karein
+        return history.map(node => ({
+            index: node.index.toString(),
+            filledCount: node.filledCount.toString(),
+            slotA: node.slotA,
+            slotB: node.slotB,
+            slotC: node.slotC
+        }));
 
-            try {
-                const details = await activeContract.getMatrixTree(pkgId, currentIdx);
-                
-                // Data verify karein ki ye node usi user ka hai
-                history.push({
-                    index: currentIdx,
-                    filledCount: details.filledCount ? details.filledCount.toString() : "0",
-                    slotA: details.slotA,
-                    slotB: details.slotB,
-                    slotC: details.slotC,
-                    owner: details.ownerAddr
-                });
-            } catch (innerErr) {
-                console.warn("Skip index:", currentIdx);
-            }
-        }
-        return history;
     } catch (e) {
-        console.error("Fetch Error:", e);
+        console.error("Matrix History Fetch Error:", e);
         return [];
     }
 }
