@@ -35,9 +35,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             
             <div class="hidden md:flex gap-4">
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='index1.html'">Dashboard</button>
-                <button class="gold-btn !py-2 !px-5" onclick="location.href='deposits.html'">My Tree</button>
+                <button class="gold-btn !py-2 !px-5" onclick="location.href='deposits.html'">Genealogy</button>
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='referral.html'">Rebirth</button>
-                <button class="gold-btn !py-2 !px-5" onclick="location.href='leadership.html'">My Team</button>
+                <button class="gold-btn !py-2 !px-5" onclick="location.href='leadership.html'">Team</button>
                 <button class="gold-btn !py-2 !px-5" onclick="location.href='history.html'">History</button>
             </div>
             
@@ -71,19 +71,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('deposits.html') ? 'bg-yellow-500/10' : ''}">
                         <i data-lucide="gem" class="w-5 h-5"></i>
                     </div>
-                    <span class="text-[9px] font-bold orbitron">POSITION</span>
+                    <span class="text-[9px] font-bold orbitron">Tree</span>
                 </a>
                 <a href="referral.html" class="flex flex-col items-center gap-1 transition-all ${window.location.pathname.includes('referral.html') ? 'text-yellow-500 scale-110' : 'text-gray-400'}">
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('referral.html') ? 'bg-yellow-500/10' : ''}">
                         <i data-lucide="users-2" class="w-5 h-5"></i>
                     </div>
-                    <span class="text-[9px] font-bold orbitron">TEAM</span>
+                    <span class="text-[9px] font-bold orbitron">Rebirth</span>
                 </a>
                 <a href="leadership.html" class="flex flex-col items-center gap-1 transition-all ${window.location.pathname.includes('leadership.html') ? 'text-yellow-500 scale-110' : 'text-gray-400'}">
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('leadership.html') ? 'bg-yellow-500/10' : ''}">
                         <i data-lucide="award" class="w-5 h-5"></i>
                     </div>
-                    <span class="text-[9px] font-bold orbitron">RANK</span>
+                    <span class="text-[9px] font-bold orbitron">Team</span>
                 </a>
                 <a href="history.html" class="flex flex-col items-center gap-1 transition-all ${window.location.pathname.includes('history.html') ? 'text-yellow-500 scale-110' : 'text-gray-400'}">
                     <div class="p-2 rounded-xl ${window.location.pathname.includes('history.html') ? 'bg-yellow-500/10' : ''}">
