@@ -21,7 +21,7 @@ const CONTRACT_ABI = [
     "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
     "function rebirthCount(address, uint256) view returns (uint256)",
     "function getPendingIncomeDetails(address _user) view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer)",
-    "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time)[])",
+   "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time, address from, uint256 packageId)[])",
     "function getUserTotalData(address _user) view returns (uint256[9] stats, uint256[6] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
@@ -368,32 +368,48 @@ window.showHistory = async function(type) {
 
 window.getIncomeHistory = async (userAddress) => {
     try {
+        // Ensure contract is available
         const activeContract = window.contract || contract;
-        
-        // SAFE & RELIABLE: इवेंट्स के बजाय सीधे कॉन्ट्रैक्ट से डेटा लें
-        // यह आपके 'getUserIncomeHistory' फंक्शन को कॉल करेगा जो सबसे सटीक है
+        if (!activeContract) {
+            console.error("Contract not initialized");
+            return [];
+        }
+
+        console.log("Fetching history for:", userAddress);
         const historyData = await activeContract.getUserIncomeHistory(userAddress);
         
         if (!historyData || historyData.length === 0) return [];
 
-        // डेटा को सही फॉर्मेट में मैप करें
+        // Formatting with Double-Check (Index vs Name)
         const formattedHistory = historyData.map((record, index) => {
-            return {
-                // कॉन्ट्रैक्ट Struct: 0: amount, 1: type, 2: time, 3: from, 4: pkg
-                amount: ethers.utils.formatEther(record[0].toString()),
-                incomeType: Number(record[1].toString()),
-                time: Number(record[2].toString()),
-                from: record[3],
-                packageId: Number(record[4].toString()),
-                index: index + 1
-            };
-        });
+            try {
+                // Ethers.js sometimes returns named properties, sometimes indexed.
+                // We use || to support both scenarios.
+                const amountRaw = record.amount || record[0];
+                const typeRaw = record.incomeType || record[1];
+                const timeRaw = record.time || record[2];
+                const fromRaw = record.from || record[3];
+                const pkgRaw = record.packageId || record[4];
 
-        // नए रिकॉर्ड्स को ऊपर दिखाने के लिए रिवर्स करें
-        return formattedHistory.reverse();
+                return {
+                    amount: ethers.utils.formatEther(amountRaw.toString()),
+                    incomeType: Number(typeRaw.toString()),
+                    time: Number(timeRaw.toString()),
+                    from: fromRaw,
+                    packageId: Number(pkgRaw.toString()),
+                    index: index + 1
+                };
+            } catch (innerErr) {
+                console.warn("Record mapping error at index", index, innerErr);
+                return null;
+            }
+        }).filter(item => item !== null); // Remove failed records
+
+        // Sort by time (Newest First)
+        return formattedHistory.sort((a, b) => b.time - a.time);
         
     } catch (e) {
-        console.error("Web3 Handler History Error:", e);
+        console.error("Critical Web3 Handler History Error:", e);
         return [];
     }
 }
