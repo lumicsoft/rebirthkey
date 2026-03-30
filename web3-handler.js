@@ -517,7 +517,7 @@ window.fallbackMatrixHistory = async function(userAddr, pkgId) {
     const indices = []; // Yahan aap loop chala kar data nikal sakte hain jaise pichle message me bataya
     return []; 
 }
-// --- GLOBAL DATA FETCH ---
+// --- GLOBAL DATA FETCH (UPDATED FOR INDIVIDUAL TOTALS) ---
 async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
@@ -526,39 +526,56 @@ async function fetchAllData(address) {
         // 0:id, 1:balance, 2:totalEarned, 3:incomeCap, 4:directCount, 5:cappingLoss, 6:heldIncome, 7:lunar, 8:boxer
         const data = await activeContract.getUserTotalData(address);
         
-        // Dashboard Stats Update
+        // --- Dashboard Stats Update ---
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
         updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
-        updateText('capping-loss', format(data.stats[5])); // Optional: if you show capping loss
-        updateText('held-income', format(data.stats[6])); // New: Held Income ($200 logic or capping)
-        updateText('lunar-earnings', format(data.stats[7]));
-updateText('boxer-earnings', format(data.stats[8]));
+        updateText('capping-loss', format(data.stats[5])); 
+        updateText('held-income', format(data.stats[6])); 
+
+        // --- TOTAL INCOME STATISTICS (अलग-अलग दिखाने के लिए) ---
         
-        // Incomes (stats[7] and stats[8] are for specific rewards if needed)
+        // 1. Lunar Fund (Solidity stats[7]) -> ID: lunar-fund
+        updateText('lunar-fund', format(data.stats[7]));
+        
+        // 2. Booster Fund (Solidity stats[8]) -> ID: booster-fund
+        updateText('booster-fund', format(data.stats[8]));
+
+        // 3. Daily Income (Solidity incomes[4]) -> ID: daily-earnings
+        updateText('daily-earnings', format(data.incomes[4]));
+
+        // --- बाकी की Incomes (Incomes array mapping) ---
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
-        updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
 
-        // Referral Logic
+        // --- Referral Logic ---
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // Pending Rewards Check (for Claim Button badge/text)
+        // --- Pending Rewards Check (for Claim Button UI) ---
         try {
             const pending = await activeContract.getPendingIncomeDetails(address);
-            const totalP = parseFloat(format(pending.pendingDailyPool.add(pending.pendingLunar).add(pending.pendingBoxer)));
+            // pending.pendingDailyPool, pending.pendingLunar, pending.pendingBoxer
+            const totalP = parseFloat(ethers.utils.formatEther(pending[0])) + 
+                          parseFloat(ethers.utils.formatEther(pending[1])) + 
+                          parseFloat(ethers.utils.formatEther(pending[2]));
+            
             const claimText = document.getElementById('pending-claim-text');
             if(claimText) claimText.innerText = `Pending: ${totalP.toFixed(2)} USDT`;
-        } catch(e) {}
+            
+            // Main Claim Center Balance
+            const totalClaimVal = document.getElementById('total-pending-claim');
+            if(totalClaimVal) totalClaimVal.innerText = totalP.toFixed(2);
+            
+        } catch(e) { console.log("Pending sub-fetch error:", e); }
 
-        // Package Status Update
+        // --- Package Status Update ---
         let maxActive = -1;
         const activeStatusArray = await activeContract.getUserActivePackages(address);
         for (let i = 0; i < 12; i++) {
