@@ -534,6 +534,8 @@ async function fetchAllData(address) {
         updateText('direct-count', data.stats[4].toString());
         updateText('capping-loss', format(data.stats[5])); // Optional: if you show capping loss
         updateText('held-income', format(data.stats[6])); // New: Held Income ($200 logic or capping)
+        updateText('lunar-earnings', format(data.stats[7]));
+updateText('boxer-earnings', format(data.stats[8]));
         
         // Incomes (stats[7] and stats[8] are for specific rewards if needed)
         updateText('direct-earnings', format(data.incomes[0]));
