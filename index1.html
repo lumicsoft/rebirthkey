@@ -91,10 +91,10 @@
                         <i data-lucide="shield-check" class="text-yellow-500 w-8 h-8"></i>
                     </div>
                     <div>
-                        <h2 id="wallet-address-display" class="text-xl font-black orbitron text-white">Connecting...</h2>
+                        <h2 id="connect-btn" class="text-xl font-black orbitron text-white">Connecting...</h2>
                         <div class="flex gap-4 mt-1">
                             <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
-                            <span id="join-date" class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                     <p class="text-[9px] text-gray-500 uppercase font-bold">Total Pending</p>
                     <p id="total-pending-claim" class="text-2xl font-black orbitron text-white">0.00</p>
                 </div>
-                <button onclick="handleClaimAll()" id="claim-btn" class="px-8 py-3 bg-yellow-500 text-black font-black orbitron text-xs rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed">CLAIM ALL</button>
+                <button onclick="handleClaimRewards()" id="claim-btn" class="px-8 py-3 bg-yellow-500 text-black font-black orbitron text-xs rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed">CLAIM ALL NOW</button>
             </div>
         </div>
 
@@ -214,67 +214,65 @@
         ];
 
         async function renderPackages(activeLevelFromBlockchain = -1) {
-    const container = document.getElementById('package-grid');
-    if(!container) return;
+            const container = document.getElementById('package-grid');
+            if(!container) return;
 
-    let rebirthCounts = {};
-    if (window.signer && window.contract) {
-        try {
-            const addr = await window.signer.getAddress();
-            const counts = await Promise.all(
-                packageData.map(pkg => window.contract.rebirthCount(addr, pkg.id))
-            );
-            counts.forEach((c, index) => { rebirthCounts[index] = c.toString(); });
-        } catch (e) { console.log("Rebirth fetch error:", e); }
-    }
-
-    container.innerHTML = packageData.map(pkg => {
-        const isActive = activeLevelFromBlockchain >= pkg.id;
-        const myRebirthCount = parseInt(rebirthCounts[pkg.id] || "0"); 
-        
-        // LOGIC: Static Rebirth Value * My Rebirth Count
-        const totalRebirthValue = myRebirthCount * pkg.rebirth;
-
-        return `
-        <div class="package-card ${isActive ? 'active-card' : ''}">
-            <span class="price-tag">$${pkg.price}</span>
-
-            ${isActive ? 
-                `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-elite orbitron">REBUY</button>` : 
-                `<button onclick="handleBuyPackage(${pkg.id})" class="btn-buy-elite orbitron">BUY NOW</button>`
+            let rebirthCounts = {};
+            if (window.signer && window.contract) {
+                try {
+                    const addr = await window.signer.getAddress();
+                    const counts = await Promise.all(
+                        packageData.map(pkg => window.contract.rebirthCount(addr, pkg.id))
+                    );
+                    counts.forEach((c, index) => { rebirthCounts[index] = c.toString(); });
+                } catch (e) { console.log("Rebirth fetch error:", e); }
             }
 
-            <div class="meta-info-line">
-                <span class="text-gray-500">Tier</span>
-                <span class="text-white orbitron">${pkg.name}</span>
-            </div>
+            container.innerHTML = packageData.map(pkg => {
+                const isActive = activeLevelFromBlockchain >= pkg.id;
+                const myRebirthCount = parseInt(rebirthCounts[pkg.id] || "0"); 
+                const totalRebirthValue = myRebirthCount * pkg.rebirth;
 
-            <div class="meta-info-line">
-                <span class="text-gray-500">Unit Value</span>
-                <span class="text-gray-400 orbitron">${pkg.rebirth}</span>
-            </div>
+                return `
+                <div class="package-card ${isActive ? 'active-card' : ''}">
+                    <span class="price-tag">$${pkg.price}</span>
 
-            <div class="meta-info-line border-t border-yellow-500/20">
-                <span class="text-gray-500">My Rebirths</span>
-                <span class="text-cyan-400 orbitron font-bold">${myRebirthCount}</span>
-            </div>
+                    ${isActive ? 
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-rebuy-elite orbitron">REBUY</button>` : 
+                        `<button onclick="handleBuyPackage(${pkg.id})" class="btn-buy-elite orbitron">BUY NOW</button>`
+                    }
 
-            <div class="meta-info-line bg-yellow-500/5">
-                <span class="text-yellow-500">Total Value</span>
-                <span class="text-yellow-500 orbitron font-black">${totalRebirthValue}</span>
-            </div>
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Tier</span>
+                        <span class="text-white orbitron">${pkg.name}</span>
+                    </div>
 
-            <div class="meta-info-line">
-                <span class="text-gray-500">Status</span>
-                <span class="${isActive ? 'status-text-active' : 'status-text-pending'}">
-                    ${isActive ? 'Active' : 'Locked'}
-                </span>
-            </div>
-        </div>
-        `;
-    }).join('');
-    lucide.createIcons();
-}
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Unit Value</span>
+                        <span class="text-gray-400 orbitron">${pkg.rebirth}</span>
+                    </div>
+
+                    <div class="meta-info-line border-t border-yellow-500/20">
+                        <span class="text-gray-500">My Rebirths</span>
+                        <span class="text-cyan-400 orbitron font-bold">${myRebirthCount}</span>
+                    </div>
+
+                    <div class="meta-info-line bg-yellow-500/5">
+                        <span class="text-yellow-500">Total Value</span>
+                        <span class="text-yellow-500 orbitron font-black">${totalRebirthValue}</span>
+                    </div>
+
+                    <div class="meta-info-line">
+                        <span class="text-gray-500">Status</span>
+                        <span class="${isActive ? 'status-text-active' : 'status-text-pending'}">
+                            ${isActive ? 'Active' : 'Locked'}
+                        </span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
 
         function copyLink() {
             const refInput = document.getElementById('refURL');
@@ -284,31 +282,28 @@
             alert("Referral link copied!");
         }
 
+        // --- FIXED SYNC PENDING ---
         async function syncPendingIncomes() {
-            if (!window.userData || !window.contract) return;
+            if (!window.signer || !window.contract) return;
             try {
                 const addr = await window.signer.getAddress();
                 const pendingData = await window.contract.getPendingIncomeDetails(addr);
+                
+                // Index 0: Daily, 1: Lunar, 2: Booster (Based on your solidity)
                 const daily = ethers.utils.formatEther(pendingData[0]);
                 const lunar = ethers.utils.formatEther(pendingData[1]);
                 const booster = ethers.utils.formatEther(pendingData[2]);
                 
-                document.getElementById('p-daily').innerText = daily;
-                document.getElementById('p-lunar').innerText = lunar;
-                document.getElementById('p-booster').innerText = booster;
+                document.getElementById('p-daily').innerText = parseFloat(daily).toFixed(2);
+                document.getElementById('p-lunar').innerText = parseFloat(lunar).toFixed(2);
+                document.getElementById('p-booster').innerText = parseFloat(booster).toFixed(2);
                 
                 const total = parseFloat(daily) + parseFloat(lunar) + parseFloat(booster);
                 document.getElementById('total-pending-claim').innerText = total.toFixed(2);
-                document.getElementById('claim-btn').disabled = total <= 0;
-            } catch (e) { console.log(e); }
-        }
-
-        async function handleClaimAll() {
-            try {
-                const tx = await window.contract.claimAllIncomes();
-                await tx.wait();
-                alert("Claimed!"); location.reload();
-            } catch (e) { alert("Failed!"); }
+                
+                const claimBtn = document.getElementById('claim-btn');
+                if(claimBtn) claimBtn.disabled = total <= 0;
+            } catch (e) { console.log("Pending Sync Error:", e); }
         }
 
         let lastKnownLevel = -99;
@@ -323,7 +318,7 @@
                     }
                     syncPendingIncomes();
                 }
-            }, 2000);
+            }, 3000);
         });
     </script>
 </body>
