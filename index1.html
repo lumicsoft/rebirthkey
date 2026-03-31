@@ -105,7 +105,13 @@
             </div>
 
             <div class="gold-border-fixed p-6 flex flex-col justify-center">
-                <p class="text-[10px] text-yellow-500 font-black uppercase mb-3 text-center tracking-widest">Your Referral Link</p>
+                <div class="flex justify-between items-center mb-3 px-1">
+                    <p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest">Your Referral Link</p>
+                    <a href="https://t.me/rebirthkeysupport" target="_blank" class="flex items-center gap-1 text-cyan-400 hover:text-white transition">
+                        <i data-lucide="send" class="w-3 h-3"></i>
+                        <span class="text-[9px] font-bold uppercase">Support</span>
+                    </a>
+                </div>
                 <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-yellow-500/30">
                     <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono">
                     <button onclick="copyLink()" class="text-yellow-500 hover:scale-110 transition"><i data-lucide="copy" class="w-4 h-4"></i></button>
@@ -160,34 +166,30 @@
             <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
         </div>
 
-       <div class="gold-border-fixed p-4 md:p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10">
-    <div class="flex-grow text-center md:text-left w-full">
-        <p class="text-[10px] text-yellow-500 font-black uppercase mb-1">Available Balance</p>
-        <div class="flex items-baseline justify-center md:justify-start gap-2 flex-wrap">
-            <span id="balance-large" class="text-4xl md:text-6xl font-black orbitron break-all">0.00</span>
-            <span class="text-sm md:text-xl text-gray-500 font-bold">USDT</span>
-        </div>
-    </div>
+        <div class="gold-border-fixed p-4 md:p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10">
+            <div class="flex-grow text-center md:text-left w-full">
+                <p class="text-[10px] text-yellow-500 font-black uppercase mb-1">Available Balance</p>
+                <div class="flex items-baseline justify-center md:justify-start gap-2 flex-wrap">
+                    <span id="balance-large" class="text-4xl md:text-6xl font-black orbitron break-all">0.00</span>
+                    <span class="text-sm md:text-xl text-gray-500 font-bold">USDT</span>
+                </div>
+            </div>
 
-    <div class="w-full md:w-80">
-        <div class="mb-4 p-3 md:p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-center">
-            <p class="text-[9px] md:text-[10px] text-red-500 font-black uppercase tracking-widest mb-1">Hold Income</p>
-            <div class="flex justify-center items-center gap-2">
-                <span id="held-income" class="text-xl md:text-2xl font-black orbitron text-white">0.00</span>
-                <span class="text-[10px] text-gray-600 font-bold uppercase">USDT</span>
+            <div class="w-full md:w-80">
+                <div class="mb-4 p-3 md:p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-center">
+                    <p class="text-[9px] md:text-[10px] text-red-500 font-black uppercase tracking-widest mb-1">Hold Income</p>
+                    <div class="flex justify-center items-center gap-2">
+                        <span id="held-income" class="text-xl md:text-2xl font-black orbitron text-white">0.00</span>
+                        <span class="text-[10px] text-gray-600 font-bold uppercase">USDT</span>
+                    </div>
+                </div>
+
+                <button onclick="handleWithdraw()" class="w-full py-4 md:py-5 text-sm md:text-lg shadow-xl shadow-yellow-500/10 mb-3" 
+                        style="background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-weight: 900; border-radius: 10px;">
+                    WITHDRAW NOW
+                </button>
             </div>
         </div>
-
-        <button onclick="handleWithdraw()" class="w-full py-4 md:py-5 text-sm md:text-lg shadow-xl shadow-yellow-500/10 mb-3" 
-                style="background: linear-gradient(135deg, #ffd700, #b8860b); color: black; font-weight: 900; border-radius: 10px;">
-            WITHDRAW NOW
-        </button>
-
-        <p class="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase text-center md:text-right">
-            Capping Left: <span id="income-cap" class="text-yellow-500">0.00 USDT</span>
-        </p>
-    </div>
-</div>
 
         <h3 class="orbitron font-black text-2xl text-white mb-8 border-l-4 border-yellow-500 pl-4 uppercase">Investment Packages</h3>
         <div id="package-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-20"></div>
@@ -282,14 +284,12 @@
             alert("Referral link copied!");
         }
 
-        // --- FIXED SYNC PENDING ---
         async function syncPendingIncomes() {
             if (!window.signer || !window.contract) return;
             try {
                 const addr = await window.signer.getAddress();
                 const pendingData = await window.contract.getPendingIncomeDetails(addr);
                 
-                // Index 0: Daily, 1: Lunar, 2: Booster (Based on your solidity)
                 const daily = ethers.utils.formatEther(pendingData[0]);
                 const lunar = ethers.utils.formatEther(pendingData[1]);
                 const booster = ethers.utils.formatEther(pendingData[2]);
