@@ -610,9 +610,12 @@ async function fetchAllData(address) {
         window.userData.currentPackageId = maxActive;
         if (typeof renderPackages === "function") renderPackages(maxActive);
 
+        // RANK ko PACKAGE mein badla gaya hai
         const rankHeader = document.getElementById('current-rank-header');
-        if(rankHeader) rankHeader.innerText = maxActive >= 0 ? "G" + (maxActive + 0) : "No Rank";
-
+        if(rankHeader) {
+            // Agar koi package active hai (maxActive 0 se 11) toh uska naam dikhayega, warna "No Package"
+            rankHeader.innerText = maxActive >= 0 ? "PACKAGE: G" + maxActive : "PACKAGE: NONE";
+        }
     } catch (e) { 
         console.error("Fetch Data Global Error:", e); 
     }
