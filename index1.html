@@ -287,31 +287,30 @@
 
         function copyLink() {
             const refInput = document.getElementById('refURL');
-            if (refInput.value.includes("Syncing") || !refInput.value) return;
+            if (!refInput || refInput.value.includes("Syncing") || !refInput.value) return;
             refInput.select();
             navigator.clipboard.writeText(refInput.value);
             alert("Referral link copied!");
         }
 
-        // Updated Pending Sync to include Fast Track
         async function syncPendingIncomes() {
             if (!window.signer || !window.contract) return;
             try {
                 const addr = await window.signer.getAddress();
                 const pendingData = await window.contract.getPendingIncomeDetails(addr);
                 
-                const daily = ethers.utils.formatEther(pendingData[0]);
-                const lunar = ethers.utils.formatEther(pendingData[1]);
-                const booster = ethers.utils.formatEther(pendingData[2]);
-                // Index 3 is Fast Track according to your smart contract
-                const fastTrack = pendingData[3] ? ethers.utils.formatEther(pendingData[3]) : "0";
+                // Safe check for array values
+                const dailyVal = pendingData[0] ? ethers.utils.formatEther(pendingData[0]) : "0";
+                const lunarVal = pendingData[1] ? ethers.utils.formatEther(pendingData[1]) : "0";
+                const boosterVal = pendingData[2] ? ethers.utils.formatEther(pendingData[2]) : "0";
+                const fastTrackVal = (pendingData.length > 3 && pendingData[3]) ? ethers.utils.formatEther(pendingData[3]) : "0";
                 
-                document.getElementById('p-daily').innerText = parseFloat(daily).toFixed(2);
-                document.getElementById('p-lunar').innerText = parseFloat(lunar).toFixed(2);
-                document.getElementById('p-booster').innerText = parseFloat(booster).toFixed(2);
-                document.getElementById('p-fast-track').innerText = parseFloat(fastTrack).toFixed(2);
+                document.getElementById('p-daily').innerText = parseFloat(dailyVal).toFixed(2);
+                document.getElementById('p-lunar').innerText = parseFloat(lunarVal).toFixed(2);
+                document.getElementById('p-booster').innerText = parseFloat(boosterVal).toFixed(2);
+                document.getElementById('p-fast-track').innerText = parseFloat(fastTrackVal).toFixed(2);
                 
-                const total = parseFloat(daily) + parseFloat(lunar) + parseFloat(booster) + parseFloat(fastTrack);
+                const total = parseFloat(dailyVal) + parseFloat(lunarVal) + parseFloat(boosterVal) + parseFloat(fastTrackVal);
                 document.getElementById('total-pending-claim').innerText = total.toFixed(2);
                 
                 const claimBtn = document.getElementById('claim-btn');
