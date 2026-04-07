@@ -94,7 +94,7 @@
                         <h2 id="connect-btn" class="text-xl font-black orbitron text-white">Connecting...</h2>
                         <div class="flex gap-4 mt-1">
                             <span id="user-id-display" class="text-xs font-bold text-yellow-500 orbitron tracking-widest">ID: #---</span>
-                            <span class="text-[10px] text-gray-500 font-bold uppercase">LIVE STATUS: ONLINE</span>
+                            <span id="current-rank-header" class="text-[10px] text-gray-500 font-bold uppercase">RANK: SYNCING</span>
                         </div>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
         <div class="gold-border-fixed p-6 mb-10 claim-section flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
                 <h3 class="orbitron font-black text-sm text-yellow-500 uppercase tracking-widest">Rewards Claim Center</h3>
-                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Total pending income available for collection</p>
+                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Includes Daily, Lunar, Booster & Fast Track Rewards</p>
             </div>
             <div class="flex items-center gap-8">
                 <div class="text-center">
@@ -141,7 +141,7 @@
             
             <div class="income-card"><i data-lucide="zap" class="icon-box"></i> 
                 <div>
-                    <p class="text-[9px] text-gray-500 uppercase font-bold">Boxer Fund</p>
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Booster Fund</p>
                     <p id="booster-fund" class="text-xl font-black orbitron text-yellow-500">0.00</p>
                     <p class="pending-text">PENDING: <span id="p-booster">0.00</span></p>
                 </div>
@@ -162,7 +162,16 @@
             </div>
 
             <div class="income-card"><i data-lucide="trending-up" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Single Leg</p><p id="single-leg-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
-            <div class="income-card"><i data-lucide="award" class="icon-box"></i> <div><p class="text-[9px] text-gray-500 uppercase font-bold">Total Rewards</p><p id="reward-earnings" class="text-xl font-black orbitron">0.00</p></div></div>
+            
+            <div class="income-card border-yellow-500/50 bg-yellow-500/5">
+                <i data-lucide="rocket" class="icon-box text-yellow-400"></i> 
+                <div>
+                    <p class="text-[9px] text-yellow-500 uppercase font-black">Fast Track Bonus</p>
+                    <p id="fast-track-earnings" class="text-xl font-black orbitron">0.00</p>
+                    <p class="pending-text">PENDING: <span id="p-fast-track">0.00</span></p>
+                </div>
+            </div>
+
             <div class="income-card border-white/40"><i data-lucide="wallet" class="icon-box text-white"></i> <div><p class="text-[9px] text-gray-300 uppercase font-bold">Total Assets</p><p id="total-earned" class="text-xl font-black orbitron text-white">0.00</p></div></div>
         </div>
 
@@ -284,6 +293,7 @@
             alert("Referral link copied!");
         }
 
+        // Updated Pending Sync to include Fast Track
         async function syncPendingIncomes() {
             if (!window.signer || !window.contract) return;
             try {
@@ -293,12 +303,15 @@
                 const daily = ethers.utils.formatEther(pendingData[0]);
                 const lunar = ethers.utils.formatEther(pendingData[1]);
                 const booster = ethers.utils.formatEther(pendingData[2]);
+                // Index 3 is Fast Track according to your smart contract
+                const fastTrack = pendingData[3] ? ethers.utils.formatEther(pendingData[3]) : "0";
                 
                 document.getElementById('p-daily').innerText = parseFloat(daily).toFixed(2);
                 document.getElementById('p-lunar').innerText = parseFloat(lunar).toFixed(2);
                 document.getElementById('p-booster').innerText = parseFloat(booster).toFixed(2);
+                document.getElementById('p-fast-track').innerText = parseFloat(fastTrack).toFixed(2);
                 
-                const total = parseFloat(daily) + parseFloat(lunar) + parseFloat(booster);
+                const total = parseFloat(daily) + parseFloat(lunar) + parseFloat(booster) + parseFloat(fastTrack);
                 document.getElementById('total-pending-claim').innerText = total.toFixed(2);
                 
                 const claimBtn = document.getElementById('claim-btn');
