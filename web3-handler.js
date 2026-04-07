@@ -15,22 +15,22 @@ const CONTRACT_ABI = [
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
     "function claimAllIncomes() external", 
-    "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss)",
+    "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss, uint256 fastTrackIncome, bool fastTrackEligible)",
     "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
     "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
     "function rebirthCount(address, uint256) view returns (uint256)",
    "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time, address from, uint256 packageId)[])",
-    "function getUserTotalData(address _user) view returns (uint256[9] stats, uint256[6] incomes, address ref)",
+    "function getUserTotalData(address _user) view returns (uint256[9] stats, uint256[7] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
     "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
     "function getLevelTeamDetail(address _user, uint256 _level) view returns (tuple(address userAddress, uint256 registrationTime, uint256 currentPackageId, uint256 totalEarned)[])",
     "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
     "event PackageBought(address indexed user, uint256 pkgId, uint256 amount)",
-    "function getUserActivePackages(address _user) view returns (bool[12])",
+    "function getUserActivePackages(address _user) view returns (bool[12])"
     "function getAllMatrixHistory(address _user, uint256 _pkgId) view returns (tuple(uint256 index, uint256 filledCount, address slotA, address slotB, address slotC)[])",
     "function getUserWithdrawHistory(address _user) external view returns (tuple(uint256 totalAmount, uint256 netAmount, uint256 fee, uint256 time)[])",
-    "function getPendingIncomeDetails(address _user) public view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer)",
+    "function getPendingIncomeDetails(address _user) public view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer, uint256 pendingFastTrack)",
 ];
 
 const USDT_ABI = [
@@ -535,7 +535,7 @@ async function fetchAllData(address) {
         updateText('capping-loss', format(data.stats[5])); 
         updateText('held-income', format(data.stats[6])); 
 
-        // --- TOTAL INCOME STATISTICS (अलग-अलग दिखाने के लिए) ---
+        // --- TOTAL INCOME STATISTICS ---
         
         // 1. Lunar Fund (Solidity stats[7]) -> ID: lunar-fund
         updateText('lunar-fund', format(data.stats[7]));
@@ -553,6 +553,12 @@ async function fetchAllData(address) {
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('reward-earnings', format(data.incomes[5]));
 
+        // --- NEW: Fast Track Total Earnings (Incomes index 6) ---
+        // नोट: सुनिश्चित करें कि आपका Solidity function uint256[7] रिटर्न कर रहा है
+        if(data.incomes[6]) {
+            updateText('fast-track-earnings', format(data.incomes[6]));
+        }
+
         // --- Referral Logic ---
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
@@ -561,10 +567,23 @@ async function fetchAllData(address) {
         // --- Pending Rewards Check (for Claim Button UI) ---
         try {
             const pending = await activeContract.getPendingIncomeDetails(address);
-            // pending.pendingDailyPool, pending.pendingLunar, pending.pendingBoxer
-            const totalP = parseFloat(ethers.utils.formatEther(pending[0])) + 
-                          parseFloat(ethers.utils.formatEther(pending[1])) + 
-                          parseFloat(ethers.utils.formatEther(pending[2]));
+            
+            // पुराने पेंडिंग इनाम
+            const pDaily = parseFloat(ethers.utils.formatEther(pending[0]));
+            const pLunar = parseFloat(ethers.utils.formatEther(pending[1]));
+            const pBoxer = parseFloat(ethers.utils.formatEther(pending[2]));
+            
+            // NEW: Fast Track Pending (Solidity getPendingIncomeDetails index 3)
+            const pFastTrack = pending[3] ? parseFloat(ethers.utils.formatEther(pending[3])) : 0;
+
+            // Total Calculation
+            const totalP = pDaily + pLunar + pBoxer + pFastTrack;
+            
+            // Individual UI Updates (अगर आपकी HTML में ये IDs हैं)
+            updateText('p-daily-val', pDaily.toFixed(2));
+            updateText('p-lunar-val', pLunar.toFixed(2));
+            updateText('p-boxer-val', pBoxer.toFixed(2));
+            updateText('p-fast-track-val', pFastTrack.toFixed(2)); // New ID for Fast Track Pending
             
             const claimText = document.getElementById('pending-claim-text');
             if(claimText) claimText.innerText = `Pending: ${totalP.toFixed(2)} USDT`;
@@ -572,6 +591,12 @@ async function fetchAllData(address) {
             // Main Claim Center Balance
             const totalClaimVal = document.getElementById('total-pending-claim');
             if(totalClaimVal) totalClaimVal.innerText = totalP.toFixed(2);
+            
+            // Claim Button Status Update
+            const claimBtn = document.getElementById('claim-btn');
+            if(claimBtn) {
+                claimBtn.disabled = totalP <= 0;
+            }
             
         } catch(e) { console.log("Pending sub-fetch error:", e); }
 
@@ -601,18 +626,26 @@ window.syncPendingRewards = async function() {
         // Contract function call: getPendingIncomeDetails
         const pending = await activeContract.getPendingIncomeDetails(address);
         
-        // Ethers se readable format mein convert karein
-        const pDaily = parseFloat(ethers.utils.formatEther(pending.pendingDailyPool));
-        const pLunar = parseFloat(ethers.utils.formatEther(pending.pendingLunar));
-        const pBoxer = parseFloat(ethers.utils.formatEther(pending.pendingBoxer));
+        // Ethers से readable format में convert करें (Fast Track के साथ)
+        const pDaily = parseFloat(ethers.utils.formatEther(pending.pendingDailyPool || pending[0]));
+        const pLunar = parseFloat(ethers.utils.formatEther(pending.pendingLunar || pending[1]));
+        const pBoxer = parseFloat(ethers.utils.formatEther(pending.pendingBoxer || pending[2]));
         
-        const totalPending = pDaily + pLunar + pBoxer;
+        // NEW: Fast Track Pending (इंडेक्स 3 या नाम से एक्सेस)
+        const pFastTrack = (pending.pendingFastTrack || pending[3]) ? 
+                           parseFloat(ethers.utils.formatEther(pending.pendingFastTrack || pending[3])) : 0;
+        
+        // Total Calculate करें (Fast Track मिलाकर)
+        const totalPending = pDaily + pLunar + pBoxer + pFastTrack;
 
-        // UI Par values update karein
+        // UI Par values update करें
         updateText('total-pending-val', totalPending.toFixed(2));
         updateText('p-daily-small', pDaily.toFixed(2));
         updateText('p-lunar-small', pLunar.toFixed(2));
         updateText('p-boxer-small', pBoxer.toFixed(2));
+        
+        // NEW: UI update for Fast Track Pending
+        updateText('p-fast-track-small', pFastTrack.toFixed(2)); 
 
         // Claim Button Status logic
         const claimBtn = document.getElementById('claim-btn');
