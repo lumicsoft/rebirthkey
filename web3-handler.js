@@ -611,7 +611,7 @@ async function fetchAllData(address) {
         if (typeof renderPackages === "function") renderPackages(maxActive);
 
         const rankHeader = document.getElementById('current-rank-header');
-        if(rankHeader) rankHeader.innerText = maxActive >= 0 ? "V" + (maxActive + 1) : "No Rank";
+        if(rankHeader) rankHeader.innerText = maxActive >= 0 ? "G" + (maxActive + 0) : "No Rank";
 
     } catch (e) { 
         console.error("Fetch Data Global Error:", e); 
