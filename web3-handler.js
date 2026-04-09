@@ -81,7 +81,7 @@ async function init() {
 
 window.handleBuyPackage = async function(pkgId) {
     try {
-        // 1. Apne packageData array se sahi details nikalna
+       
         const selectedPkg = packageData.find(p => p.id === pkgId);
         
         if (!selectedPkg) {
@@ -89,21 +89,20 @@ window.handleBuyPackage = async function(pkgId) {
             return;
         }
 
-        // 2. Price ko USDT decimals (18) mein convert karna
         const price = ethers.utils.parseUnits(selectedPkg.price.toString(), 18);
         console.log(`Buying ${selectedPkg.name}: ${selectedPkg.price} USDT`);
 
         const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, window.signer);
         const userAddress = await window.signer.getAddress();
         
-        // 3. Current allowance check karna
+     
         const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
         
-        // 4. Agar allowance kam hai, toh exact price approve karna
+     
         if (allowance.lt(price)) {
             console.log("Approving exact amount:", selectedPkg.price, "USDT");
             
-            // Button text update (agar user interface mein button hai)
+           
             const btn = document.querySelector(`button[onclick*='handleBuyPackage(${pkgId})']`);
             if(btn) btn.innerText = "APPROVING...";
 
@@ -111,7 +110,6 @@ window.handleBuyPackage = async function(pkgId) {
             await approveTx.wait();
         }
         
-        // 5. Final Purchase Transaction
         const tx = await window.contract.buyPackage(pkgId);
         await tx.wait();
         
@@ -120,7 +118,7 @@ window.handleBuyPackage = async function(pkgId) {
         
     } catch (err) { 
         console.error("Purchase Error:", err);
-        // User cancellation check
+       
         if (err.code === 4001) {
             alert("Transaction cancelled by user.");
         } else {
