@@ -81,34 +81,54 @@ async function init() {
 
 window.handleBuyPackage = async function(pkgId) {
     try {
-        const pkg = await window.contract.packages(pkgId);
-        const price = pkg.price;
+        // 1. Apne packageData array se sahi details nikalna
+        const selectedPkg = packageData.find(p => p.id === pkgId);
         
+        if (!selectedPkg) {
+            alert("Package not found!");
+            return;
+        }
+
+        // 2. Price ko USDT decimals (18) mein convert karna
+        const price = ethers.utils.parseUnits(selectedPkg.price.toString(), 18);
+        console.log(`Buying ${selectedPkg.name}: ${selectedPkg.price} USDT`);
+
         const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, window.signer);
         const userAddress = await window.signer.getAddress();
         
+        // 3. Current allowance check karna
         const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
         
-       
+        // 4. Agar allowance kam hai, toh exact price approve karna
         if (allowance.lt(price)) {
-            console.log("Approving exact amount:", price.toString());
+            console.log("Approving exact amount:", selectedPkg.price, "USDT");
+            
+            // Button text update (agar user interface mein button hai)
+            const btn = document.querySelector(`button[onclick*='handleBuyPackage(${pkgId})']`);
+            if(btn) btn.innerText = "APPROVING...";
+
             const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, price);
             await approveTx.wait();
         }
         
-      
+        // 5. Final Purchase Transaction
         const tx = await window.contract.buyPackage(pkgId);
         await tx.wait();
         
-        alert("Package purchased successfully!");
+        alert(`${selectedPkg.name} purchased successfully!`);
         location.reload();
         
     } catch (err) { 
         console.error("Purchase Error:", err);
-        alert("Purchase failed: " + (err.reason || err.message)); 
+        // User cancellation check
+        if (err.code === 4001) {
+            alert("Transaction cancelled by user.");
+        } else {
+            alert("Purchase failed: " + (err.reason || err.message));
+        }
+        location.reload();
     }
 }
-
 window.handleWithdraw = async function() {
     try {
         const tx = await contract.withdraw();
