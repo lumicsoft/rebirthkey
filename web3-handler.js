@@ -289,14 +289,14 @@ function showLogoutIcon(address) {
 async function setupApp(address) {
     try {
         const network = await provider.getNetwork();
-        if (network.chainId !== 56) { 
+        if (network.chainId !== 97) { 
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x38' }],
+                    params: [{ chainId: '0x61' }],
                 });
             } catch (err) {
-                alert("Please switch to BSC Mainnet!");
+                alert("Please switch to BSC testnet!");
                 return; 
             }
         }
