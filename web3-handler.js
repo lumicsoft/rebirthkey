@@ -2,13 +2,12 @@ let provider, signer, contract, usdtContract;
 const CONTRACT_ADDRESS = "0x41C6C37bc78E2C1dbe5FE58147760C2fbC761DEA"; 
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
-// --- GLOBAL DATA OBJECT FOR DASHBOARD SYNC ---
 window.userData = {
     currentPackageId: -1,
     isRegistered: false
 };
 
-// --- NEW ABI FOR REBIRTHKEY CONTRACT ---
+
 const CONTRACT_ABI = [
  
     "function register(address _ref) external",
@@ -79,28 +78,35 @@ async function init() {
     }
 }
 
-// --- CORE LOGIC ---
+
 window.handleBuyPackage = async function(pkgId) {
     try {
-        const pkg = await contract.packages(pkgId);
+        const pkg = await window.contract.packages(pkgId);
         const price = pkg.price;
         
-        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
-        const userAddress = await signer.getAddress();
+        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, window.signer);
+        const userAddress = await window.signer.getAddress();
         
-        // 1. Check Allowance
         const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        
+       
         if (allowance.lt(price)) {
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+            console.log("Approving exact amount:", price.toString());
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, price);
             await approveTx.wait();
         }
         
-        // 2. Buy Package
-        const tx = await contract.buyPackage(pkgId);
+      
+        const tx = await window.contract.buyPackage(pkgId);
         await tx.wait();
+        
         alert("Package purchased successfully!");
         location.reload();
-    } catch (err) { alert("Purchase failed: " + (err.reason || err.message)); }
+        
+    } catch (err) { 
+        console.error("Purchase Error:", err);
+        alert("Purchase failed: " + (err.reason || err.message)); 
+    }
 }
 
 window.handleWithdraw = async function() {
@@ -112,14 +118,13 @@ window.handleWithdraw = async function() {
     } catch (err) { alert("Withdraw failed: " + (err.reason || err.message)); }
 }
 window.handleClaimRewards = async function() {
+    const btn = document.getElementById('claim-btn');
     try {
-        const btn = document.getElementById('claim-btn');
         if(btn) { 
             btn.disabled = true; 
             btn.innerText = "PROCESSING..."; 
         }
 
-        // Exact function from your Part 2 code
         const tx = await window.contract.claimAllIncomes();
         console.log("Claiming rewards... TX:", tx.hash);
         
@@ -127,17 +132,32 @@ window.handleClaimRewards = async function() {
         
         alert("Success! Rewards added to your main balance.");
         
-        // Data Refresh
         if(typeof fetchAllData === 'function') {
-            const address = await signer.getAddress();
+            const address = await window.signer.getAddress();
             await fetchAllData(address); 
         }
-        await window.updatePendingRewardsUI();
+
+       
+        if(typeof window.updatePendingRewardsUI === 'function') {
+            await window.updatePendingRewardsUI();
+        } else if(btn) {
+            btn.disabled = false;
+            btn.innerText = "CLAIM ALL NOW";
+        }
         
     } catch (err) {
         console.error("Claim Error:", err);
-        alert("Claim failed. Check console for details.");
-        window.updatePendingRewardsUI(); // Reset button state
+        
+        if (!(err instanceof TypeError && err.message.includes("updatePendingRewardsUI"))) {
+            alert("Claim failed. Check console for details.");
+        }
+
+        if(typeof window.updatePendingRewardsUI === 'function') {
+            window.updatePendingRewardsUI();
+        } else if(btn) {
+            btn.disabled = false;
+            btn.innerText = "CLAIM ALL NOW";
+        }
     }
 }
 
@@ -173,7 +193,6 @@ window.handleRegister = async function() {
             return;
         }
 
-        // 1. Initial Setup
         const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
         await tempProvider.send("eth_requestAccounts", []);
         signer = tempProvider.getSigner();
@@ -183,9 +202,10 @@ window.handleRegister = async function() {
         const userAddress = await signer.getAddress();
         const refField = document.getElementById('reg-referrer');
         const referrerAddress = refField ? refField.value.trim() : "";
+        
+     
         const regAmount = ethers.utils.parseUnits("5", 18);
 
-        // 2. Validations
         if (!ethers.utils.isAddress(referrerAddress)) {
             alert("Please enter a valid Referrer Wallet Address (0x...)");
             return;
@@ -197,28 +217,24 @@ window.handleRegister = async function() {
             btn.innerText = "PROCESSING...";
         }
 
-        // 3. --- SMART USDT APPROVAL ---
         const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
         if (allowance.lt(regAmount)) {
-            if(btn) btn.innerText = "APPROVE USDT...";
+            if(btn) btn.innerText = "APPROVE 5 USDT...";
             
-            // Approval ke liye bhi gas estimate kar rahe hain
-            const estApproveGas = await usdtContract.estimateGas.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+      
+            const estApproveGas = await usdtContract.estimateGas.approve(CONTRACT_ADDRESS, regAmount);
             
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256, {
-                gasLimit: estApproveGas.mul(130).div(100) // 30% Buffer
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, regAmount, {
+                gasLimit: estApproveGas.mul(130).div(100) 
             });
             await approveTx.wait();
         }
+      
 
-        // 4. --- DYNAMIC GAS ESTIMATION FOR REGISTER ---
         if(btn) btn.innerText = "ESTIMATING GAS...";
 
         try {
-            // Contract se pucho ki is transaction mein kitni gas lagegi
             const estimatedGas = await contract.estimateGas.register(referrerAddress);
-            
-            // 30% Buffer lagana (Safe side ke liye)
             const gasLimitWithBuffer = estimatedGas.mul(130).div(100); 
             
             console.log("Estimated Gas:", estimatedGas.toString());
@@ -238,7 +254,6 @@ window.handleRegister = async function() {
                 window.location.href = "index1.html";
             }
         } catch (gasErr) {
-            // Agar estimateGas fail hota hai, matlab transaction contract level pe fail ho rahi hai (e.g. already registered)
             console.error("Gas Estimation Failed:", gasErr);
             throw new Error("Transaction would fail. Check if you are already registered or have enough BNB for gas.");
         }
@@ -271,18 +286,17 @@ function showLogoutIcon(address) {
 }
 
 // --- APP SETUP ---
-// --- APP SETUP ---
 async function setupApp(address) {
     try {
         const network = await provider.getNetwork();
-        if (network.chainId !== 97) { 
+        if (network.chainId !== 56) { 
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x61' }],
+                    params: [{ chainId: '0x38' }],
                 });
             } catch (err) {
-                alert("Please switch to BSC Testnet!");
+                alert("Please switch to BSC Mainnet!");
                 return; 
             }
         }
@@ -293,14 +307,14 @@ async function setupApp(address) {
 
         window.userData.isRegistered = isRegistered;
 
-        // Redirect logic for unregistered users
+       
         if (!isRegistered) {
             if (!path.includes('register') && !path.includes('login')) {
                 window.location.href = "register.html"; 
                 return; 
             }
         } else {
-            // Redirect logic for registered users (avoid login/register pages)
+           
             if (path.includes('register') || path.includes('login') || path.endsWith('index.html')) {
                 window.location.href = "index1.html";
                 return;
@@ -310,11 +324,11 @@ async function setupApp(address) {
         updateNavbar(address);
         showLogoutIcon(address); 
 
-        // Dashboard Path
+        
         if (path.includes('index1')) {
             await fetchAllData(address);
         }
-// Is block ko replace karein
+
 if (path.includes('referral') || path.includes('deposits')) {
     if (typeof initReferralPage === "function") {
         await initReferralPage();
@@ -324,19 +338,18 @@ if (path.includes('referral') || path.includes('deposits')) {
         console.log("Page specific init function not found - Skipping");
     }
 }
-        // --- UPDATED: DEPOSITS PAGE PATH ---
+       
         if (path.includes('deposits')) {
-            // Agar deposits.html par initTeamPage() ya koi specific initialization hai
+           
             if (typeof initTeamPage === "function") {
                 await initTeamPage();
             } else {
-                // Fallback: Data load karega aur agar tree function available hai to trigger karega
+               
                 await fetchAllData(address); 
                 if(window.loadTree) window.loadTree(address);
             }
         }
 
-        // History Path
         if (path.includes('history')) {
             window.showHistory('deposit');
         }
@@ -370,11 +383,10 @@ window.showHistory = async function(type) {
         </div>
     `).join('');
 }
-// web3-handler.js mein add karein
+
 
 window.getIncomeHistory = async (userAddress) => {
     try {
-        // Ensure contract is available
         const activeContract = window.contract || contract;
         if (!activeContract) {
             console.error("Contract not initialized");
@@ -386,11 +398,10 @@ window.getIncomeHistory = async (userAddress) => {
         
         if (!historyData || historyData.length === 0) return [];
 
-        // Formatting with Double-Check (Index vs Name)
+     
         const formattedHistory = historyData.map((record, index) => {
             try {
-                // Ethers.js sometimes returns named properties, sometimes indexed.
-                // We use || to support both scenarios.
+               
                 const amountRaw = record.amount || record[0];
                 const typeRaw = record.incomeType || record[1];
                 const timeRaw = record.time || record[2];
@@ -409,9 +420,8 @@ window.getIncomeHistory = async (userAddress) => {
                 console.warn("Record mapping error at index", index, innerErr);
                 return null;
             }
-        }).filter(item => item !== null); // Remove failed records
+        }).filter(item => item !== null);
 
-        // Sort by time (Newest First)
         return formattedHistory.sort((a, b) => b.time - a.time);
         
     } catch (e) {
@@ -468,10 +478,9 @@ window.loadSpecificMatrixNode = async function(pkgId, index) {
     try {
         const activeContract = window.contract || contract;
         
-        // Calling the function you added to ABI
         const data = await activeContract.getMatrixTree(pkgId, index);
 
-        // Data Structure mapping
+       
         return {
             owner: data.ownerAddr,
             filledCount: data.filledCount.toNumber(),
@@ -484,16 +493,15 @@ window.loadSpecificMatrixNode = async function(pkgId, index) {
     }
 }
 
-// --- NEW: FETCH ALL HISTORY (For the History Page) ---
+
 window.getAllMatrixHistory = async function(userAddr, pkgId) {
     try {
-        // Check karein ki contract object sahi se initialize hai
         const activeContract = window.contract; 
         if (!activeContract) throw new Error("Contract not initialized");
 
         console.log("Fetching history for:", userAddr, "Pkg:", pkgId);
 
-        // Seedha contract call karein (Kyunki ye function contract me hai)
+      
         const history = await activeContract.getAllMatrixHistory(userAddr, pkgId);
         
         return history.map(node => ({
@@ -506,24 +514,21 @@ window.getAllMatrixHistory = async function(userAddr, pkgId) {
 
     } catch (e) {
         console.error("Matrix History Fetch Error:", e);
-        // Agar function nahi mil raha, to fallback loop chalayein (Safety ke liye)
+      
         return window.fallbackMatrixHistory(userAddr, pkgId);
     }
 }
 
-// Ye backup function hai agar ABI mismatch ho jaye
+
 window.fallbackMatrixHistory = async function(userAddr, pkgId) {
     const activeContract = window.contract;
-    const indices = []; // Yahan aap loop chala kar data nikal sakte hain jaise pichle message me bataya
+    const indices = []; 
     return []; 
 }
-// --- GLOBAL DATA FETCH (UPDATED FOR INDIVIDUAL TOTALS) ---
 async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
         
-        // stats index mapping as per Solidity: 
-        // 0:id, 1:balance, 2:totalEarned, 3:incomeCap, 4:directCount, 5:cappingLoss, 6:heldIncome, 7:lunar, 8:boxer
         const data = await activeContract.getUserTotalData(address);
         
         // --- Dashboard Stats Update ---
@@ -537,62 +542,60 @@ async function fetchAllData(address) {
 
         // --- TOTAL INCOME STATISTICS ---
         
-        // 1. Lunar Fund (Solidity stats[7]) -> ID: lunar-fund
+      
         updateText('lunar-fund', format(data.stats[7]));
         
-        // 2. Booster Fund (Solidity stats[8]) -> ID: booster-fund
+       
         updateText('booster-fund', format(data.stats[8]));
 
-        // 3. Daily Income (Solidity incomes[4]) -> ID: daily-earnings
+      
         updateText('daily-earnings', format(data.incomes[4]));
 
-        // --- बाकी की Incomes (Incomes array mapping) ---
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('reward-earnings', format(data.incomes[5]));
 
-        // --- NEW: Fast Track Total Earnings (Incomes index 6) ---
-        // नोट: सुनिश्चित करें कि आपका Solidity function uint256[7] रिटर्न कर रहा है
+       
         if(data.incomes[6]) {
             updateText('fast-track-earnings', format(data.incomes[6]));
         }
 
-        // --- Referral Logic ---
+      
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-        // --- Pending Rewards Check (for Claim Button UI) ---
+     
         try {
             const pending = await activeContract.getPendingIncomeDetails(address);
             
-            // पुराने पेंडिंग इनाम
+           
             const pDaily = parseFloat(ethers.utils.formatEther(pending[0]));
             const pLunar = parseFloat(ethers.utils.formatEther(pending[1]));
             const pBoxer = parseFloat(ethers.utils.formatEther(pending[2]));
             
-            // NEW: Fast Track Pending (Solidity getPendingIncomeDetails index 3)
+            
             const pFastTrack = pending[3] ? parseFloat(ethers.utils.formatEther(pending[3])) : 0;
 
-            // Total Calculation
+         
             const totalP = pDaily + pLunar + pBoxer + pFastTrack;
             
-            // Individual UI Updates (अगर आपकी HTML में ये IDs हैं)
+          
             updateText('p-daily-val', pDaily.toFixed(2));
             updateText('p-lunar-val', pLunar.toFixed(2));
             updateText('p-boxer-val', pBoxer.toFixed(2));
-            updateText('p-fast-track-val', pFastTrack.toFixed(2)); // New ID for Fast Track Pending
+            updateText('p-fast-track-val', pFastTrack.toFixed(2)); 
             
             const claimText = document.getElementById('pending-claim-text');
             if(claimText) claimText.innerText = `Pending: ${totalP.toFixed(2)} USDT`;
             
-            // Main Claim Center Balance
+          
             const totalClaimVal = document.getElementById('total-pending-claim');
             if(totalClaimVal) totalClaimVal.innerText = totalP.toFixed(2);
             
-            // Claim Button Status Update
+           
             const claimBtn = document.getElementById('claim-btn');
             if(claimBtn) {
                 claimBtn.disabled = totalP <= 0;
@@ -600,7 +603,7 @@ async function fetchAllData(address) {
             
         } catch(e) { console.log("Pending sub-fetch error:", e); }
 
-        // --- Package Status Update ---
+      
         let maxActive = -1;
         const activeStatusArray = await activeContract.getUserActivePackages(address);
         for (let i = 0; i < 12; i++) {
@@ -610,47 +613,45 @@ async function fetchAllData(address) {
         window.userData.currentPackageId = maxActive;
         if (typeof renderPackages === "function") renderPackages(maxActive);
 
-        // RANK ko PACKAGE mein badla gaya hai
+       
         const rankHeader = document.getElementById('current-rank-header');
         if(rankHeader) {
-            // Agar koi package active hai (maxActive 0 se 11) toh uska naam dikhayega, warna "No Package"
+            
             rankHeader.innerText = maxActive >= 0 ? "PACKAGE: G" + maxActive : "PACKAGE: NONE";
         }
     } catch (e) { 
         console.error("Fetch Data Global Error:", e); 
     }
 }
-// --- NEW: PENDING INCOME SYNC & UI UPDATE ---
+
 window.syncPendingRewards = async function() {
     try {
         const activeContract = window.contract || contract;
         const address = await signer.getAddress();
         
-        // Contract function call: getPendingIncomeDetails
+       
         const pending = await activeContract.getPendingIncomeDetails(address);
         
-        // Ethers से readable format में convert करें (Fast Track के साथ)
         const pDaily = parseFloat(ethers.utils.formatEther(pending.pendingDailyPool || pending[0]));
         const pLunar = parseFloat(ethers.utils.formatEther(pending.pendingLunar || pending[1]));
         const pBoxer = parseFloat(ethers.utils.formatEther(pending.pendingBoxer || pending[2]));
         
-        // NEW: Fast Track Pending (इंडेक्स 3 या नाम से एक्सेस)
+        
         const pFastTrack = (pending.pendingFastTrack || pending[3]) ? 
                            parseFloat(ethers.utils.formatEther(pending.pendingFastTrack || pending[3])) : 0;
         
-        // Total Calculate करें (Fast Track मिलाकर)
         const totalPending = pDaily + pLunar + pBoxer + pFastTrack;
 
-        // UI Par values update करें
+       
         updateText('total-pending-val', totalPending.toFixed(2));
         updateText('p-daily-small', pDaily.toFixed(2));
         updateText('p-lunar-small', pLunar.toFixed(2));
         updateText('p-boxer-small', pBoxer.toFixed(2));
         
-        // NEW: UI update for Fast Track Pending
+     
         updateText('p-fast-track-small', pFastTrack.toFixed(2)); 
 
-        // Claim Button Status logic
+       
         const claimBtn = document.getElementById('claim-btn');
         if (claimBtn) {
             if (totalPending <= 0) {
@@ -691,32 +692,5 @@ if (window.ethereum) {
 }
 
 window.addEventListener('load', init);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
