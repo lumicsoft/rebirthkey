@@ -193,10 +193,10 @@ window.handleLogin = async function() {
         const userData = await contract.users(userAddress);
         if (userData.id.gt(0)) {
             if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
-            window.location.href = "index1.php";
+            window.location.href = "index1.html";
         } else {
             alert("This wallet is not registered!");
-            window.location.href = "register.php";
+            window.location.href = "register.html";
         }
     } catch (err) {
         console.error("Login Error:", err);
@@ -269,7 +269,7 @@ window.handleRegister = async function() {
 
             if (receipt.status === 1) {
                 alert("Registration Successful!");
-                window.location.href = "index1.php";
+                window.location.href = "index1.html";
             }
         } catch (gasErr) {
             console.error("Gas Estimation Failed:", gasErr);
@@ -292,7 +292,7 @@ window.handleLogout = function() {
         localStorage.setItem('manualLogout', 'true');
         signer = null;
         contract = null;
-        window.location.href = "index.php";
+        window.location.href = "index.html";
     }
 }
 
@@ -328,13 +328,13 @@ async function setupApp(address) {
        
         if (!isRegistered) {
             if (!path.includes('register') && !path.includes('login')) {
-                window.location.href = "register.php"; 
+                window.location.href = "register.html"; 
                 return; 
             }
         } else {
            
-            if (path.includes('register') || path.includes('login') || path.endsWith('index.php')) {
-                window.location.href = "index1.php";
+            if (path.includes('register') || path.includes('login') || path.endsWith('index.html')) {
+                window.location.href = "index1.html";
                 return;
             }
         }
@@ -581,7 +581,7 @@ async function fetchAllData(address) {
         }
 
       
-        const refUrl = `${window.location.origin}/register.php?ref=${address}`; 
+        const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
