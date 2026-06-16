@@ -126,6 +126,10 @@
             </div>
             <div class="flex items-center gap-8">
                 <div class="text-center">
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Claimable</p>
+                    <p id="claimable-balance-display" class="text-xl font-black orbitron text-green-400">0.00</p>
+                </div>
+                <div class="text-center">
                     <p class="text-[9px] text-gray-500 uppercase font-bold">Total Pending</p>
                     <p id="total-pending-claim" class="text-2xl font-black orbitron text-white">0.00</p>
                 </div>
@@ -299,7 +303,6 @@
                 const addr = await window.signer.getAddress();
                 const pendingData = await window.contract.getPendingIncomeDetails(addr);
                 
-              
                 const dailyVal = pendingData[0] ? ethers.utils.formatEther(pendingData[0]) : "0";
                 const lunarVal = pendingData[1] ? ethers.utils.formatEther(pendingData[1]) : "0";
                 const boosterVal = pendingData[2] ? ethers.utils.formatEther(pendingData[2]) : "0";
