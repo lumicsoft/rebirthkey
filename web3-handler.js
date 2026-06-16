@@ -565,10 +565,18 @@ async function fetchAllData(address) {
         updateText('capping-loss', format(data.stats[5])); 
         updateText('held-income', format(data.stats[6])); 
 
-        // --- FIX: Safe access for Claimable Balance ---
-        // Agar userData ya state define nahi hai, to 0 dikhaye
-        const claimable = (userData && userData.state) ? userData.state.claimableBalance : 0;
-        updateText('claimable-balance-display', format(claimable));
+        // --- FIXED: Claimable Balance ---
+        // Contract struct: User -> UserState state (at index 3 in User struct)
+        // UserState struct: balance is index 0, claimableBalance is index 5
+        // Ethers.js response mein 'state' access karein, agar 'state' error de toh array index 3 use karein.
+        try {
+            // Agar userData ek array return kar raha hai:
+            const claimable = userData.state ? userData.state.claimableBalance : userData[3][5];
+            updateText('claimable-balance-display', format(claimable));
+        } catch(e) {
+            console.log("Claimable Balance read error, defaulting to 0", e);
+            updateText('claimable-balance-display', "0.00");
+        }
 
         // --- TOTAL INCOME STATISTICS ---
         updateText('lunar-fund', format(data.stats[7]));
