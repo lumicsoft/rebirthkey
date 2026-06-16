@@ -554,41 +554,39 @@ async function fetchAllData(address) {
         
         // --- 2. Data Fetching ---
         const data = await activeContract.getUserTotalData(address);
-        const userData = await activeContract.users(address); // Naye logic ke liye
+        const userData = await activeContract.users(address); 
         
-        // --- Dashboard Stats (Purane + Naye) ---
+        // --- Dashboard Stats Update ---
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
-        updateText('balance-large', format(data.stats[1]));  // Main Wallet
+        updateText('balance-large', format(data.stats[1])); 
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
         updateText('capping-loss', format(data.stats[5])); 
-        
-        // Purane stats jo pehle chal rahe the
-        updateText('held-income', "0.0000"); // Contract ke anusar inactive
+        updateText('held-income', format(data.stats[6])); 
+
+        // --- FIX: Safe access for Claimable Balance ---
+        // Agar userData ya state define nahi hai, to 0 dikhaye
+        const claimable = (userData && userData.state) ? userData.state.claimableBalance : 0;
+        updateText('claimable-balance-display', format(claimable));
+
+        // --- TOTAL INCOME STATISTICS ---
         updateText('lunar-fund', format(data.stats[7]));
         updateText('booster-fund', format(data.stats[8]));
-
-        // --- Earnings Breakdown ---
+        updateText('daily-earnings', format(data.incomes[4]));
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
-        updateText('daily-earnings', format(data.incomes[4]));
         updateText('reward-earnings', format(data.incomes[5]));
 
         if(data.incomes[6]) {
             updateText('fast-track-earnings', format(data.incomes[6]));
         }
-
-        // --- Naya: Claimable Balance Display ---
-        // Agar aapne UI mein ID add ki hai, toh ye update ho jayega
-        updateText('claimable-balance-display', format(userData.state.claimableBalance)); 
-
+      
         // --- 3. PENDING INCOME (Claim Logic) ---
         try {
             const pending = await activeContract.getPendingIncomeDetails(address);
-            
             const pDaily = parseFloat(ethers.utils.formatEther(pending[0]));
             const pLunar = parseFloat(ethers.utils.formatEther(pending[1]));
             const pBoxer = parseFloat(ethers.utils.formatEther(pending[2]));
@@ -596,7 +594,6 @@ async function fetchAllData(address) {
             
             const totalP = pDaily + pLunar + pBoxer + pFastTrack;
             
-            // Pending UI Updates
             updateText('p-daily-val', pDaily.toFixed(2));
             updateText('p-lunar-val', pLunar.toFixed(2));
             updateText('p-boxer-val', pBoxer.toFixed(2));
@@ -614,7 +611,7 @@ async function fetchAllData(address) {
             }
         } catch(e) { console.log("Pending sub-fetch error:", e); }
 
-        // --- 4. Package & Rank Status ---
+        // --- 4. Package Logic ---
         let maxActive = -1;
         const activeStatusArray = await activeContract.getUserActivePackages(address);
         for (let i = 0; i < 12; i++) {
@@ -623,7 +620,7 @@ async function fetchAllData(address) {
         
         window.userData.currentPackageId = maxActive;
         if (typeof renderPackages === "function") renderPackages(maxActive);
-
+        
         const rankHeader = document.getElementById('current-rank-header');
         if(rankHeader) {
             rankHeader.innerText = maxActive >= 0 ? "PACKAGE: G" + maxActive : "PACKAGE: NONE";
