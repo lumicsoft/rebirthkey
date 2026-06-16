@@ -9,27 +9,27 @@ window.userData = {
 
 
 const CONTRACT_ABI = [
- 
     "function register(address _ref) external",
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
     "function claimAllIncomes() external", 
-    "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss, uint256 fastTrackIncome, bool fastTrackEligible)",
-    "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
-    "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
-    "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256 userMatrixIndex, address ownerAddr, uint256 filledCount, address slotA, address slotB, address slotC)",
+    // UPDATED: User struct nested format ke saath
+    "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, tuple(uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 totalWithdrawals, uint256 claimableBalance, uint256 cumulativeWithdrawnAmount, uint256 cappingLoss, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 lunarIncome, uint256 boxerIncome, uint256 postThresholdCount) state, tuple(uint256 totalAmount, uint256 netAmount, uint256 fee, uint256 time)[] withdrawHistory, uint256 fastTrackIncome, uint256 fastTrackPaidDays, bool fastTrackEligible, bool fastTrackTerminated)",
+    "function getTeamTree2x2(address _user) view returns (address, address, address, address, address, address)",
+    "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address, uint256, uint256, address, address, address)",
+    "function getLatestMatrixNode(address _user, uint256 _pkgId) view returns (uint256, address, uint256, address, address, address)",
     "function rebirthCount(address, uint256) view returns (uint256)",
-   "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time, address from, uint256 packageId)[])",
+    "function getUserIncomeHistory(address _user) view returns (tuple(uint256 amount, uint256 incomeType, uint256 time, address from, uint256 packageId)[])",
     "function getUserTotalData(address _user) view returns (uint256[9] stats, uint256[7] incomes, address ref)",
     "function getUserHistory(address _user) view returns (tuple(string txType, uint256 amount, uint256 timestamp, string detail)[])",
-    "function packages(uint256) view returns (uint256 id, uint256 price, bool active)",
+    "function packages(uint256) view returns (uint256 id, uint256 price, uint256 poolAmount, uint256 levelAmount, uint256 dailyAmount, uint256 directAmount, uint256 capLimit, uint256 singleLegDepth, uint256 launchTime)",
     "function getLevelTeamDetail(address _user, uint256 _level) view returns (tuple(address userAddress, uint256 registrationTime, uint256 currentPackageId, uint256 totalEarned)[])",
-    "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType)",
+    "event IncomeReceived(address indexed user, uint256 amount, uint256 incomeType, address from)",
     "event PackageBought(address indexed user, uint256 pkgId, uint256 amount)",
     "function getUserActivePackages(address _user) view returns (bool[12])",
     "function getAllMatrixHistory(address _user, uint256 _pkgId) view returns (tuple(uint256 index, uint256 filledCount, address slotA, address slotB, address slotC)[])",
     "function getUserWithdrawHistory(address _user) external view returns (tuple(uint256 totalAmount, uint256 netAmount, uint256 fee, uint256 time)[])",
-    "function getPendingIncomeDetails(address _user) public view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer, uint256 pendingFastTrack)",
+    "function getPendingIncomeDetails(address _user) public view returns (uint256, uint256, uint256, uint256)"
 ];
 
 const USDT_ABI = [
