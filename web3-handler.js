@@ -31,6 +31,8 @@ const CONTRACT_ABI = [
     "function getUserWithdrawHistory(address _user) external view returns (tuple(uint256 totalAmount, uint256 netAmount, uint256 fee, uint256 time)[])",
     "function getPendingIncomeDetails(address _user) public view returns (uint256 pendingDailyPool, uint256 pendingLunar, uint256 pendingBoxer, uint256 pendingFastTrack)",
 ];
+
+isme update karke dijiye 
 const USDT_ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",
     "function allowance(address owner, address spender) external view returns (uint256)",
