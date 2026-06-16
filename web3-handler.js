@@ -547,60 +547,58 @@ async function fetchAllData(address) {
     try {
         let activeContract = window.contract || contract;
         
+        // Contract se user ka total data aur specific user struct fetch karein
         const data = await activeContract.getUserTotalData(address);
+        const userData = await activeContract.users(address); 
         
         // --- Dashboard Stats Update ---
         updateText('user-id-display', "ID: #" + data.stats[0].toString());
+        
+        // MAIN BALANCE (Direct Income)
         updateText('balance-large', format(data.stats[1])); 
+        
+        // CLAIMABLE BALANCE (Other all incomes)
+        // userData.state.claimableBalance (UserState struct ke hisab se)
+        updateText('claimable-balance-display', format(userData.state.claimableBalance)); 
+
         updateText('total-earned', format(data.stats[2]));
         updateText('income-cap', format(data.stats[3]) + " USDT");
         updateText('direct-count', data.stats[4].toString());
         updateText('capping-loss', format(data.stats[5])); 
-        updateText('held-income', format(data.stats[6])); 
+        
+        // Held income ab inactive hai, isliye 0 show karein
+        updateText('held-income', "0.0000"); 
 
         // --- TOTAL INCOME STATISTICS ---
-        
-      
         updateText('lunar-fund', format(data.stats[7]));
-        
-       
         updateText('booster-fund', format(data.stats[8]));
-
-      
         updateText('daily-earnings', format(data.incomes[4]));
-
         updateText('direct-earnings', format(data.incomes[0]));
         updateText('level-earnings', format(data.incomes[1]));
         updateText('single-leg-earnings', format(data.incomes[2])); 
         updateText('matrix-earnings', format(data.incomes[3]));
         updateText('reward-earnings', format(data.incomes[5]));
 
-       
         if(data.incomes[6]) {
             updateText('fast-track-earnings', format(data.incomes[6]));
         }
 
-      
+        // Referral URL
         const refUrl = `${window.location.origin}/register.html?ref=${address}`; 
         const refInput = document.getElementById('refURL');
         if(refInput) refInput.value = refUrl;
 
-     
+        // --- PENDING INCOME (CLAIM LOGIC) ---
         try {
             const pending = await activeContract.getPendingIncomeDetails(address);
             
-           
             const pDaily = parseFloat(ethers.utils.formatEther(pending[0]));
             const pLunar = parseFloat(ethers.utils.formatEther(pending[1]));
             const pBoxer = parseFloat(ethers.utils.formatEther(pending[2]));
-            
-            
             const pFastTrack = pending[3] ? parseFloat(ethers.utils.formatEther(pending[3])) : 0;
 
-         
             const totalP = pDaily + pLunar + pBoxer + pFastTrack;
             
-          
             updateText('p-daily-val', pDaily.toFixed(2));
             updateText('p-lunar-val', pLunar.toFixed(2));
             updateText('p-boxer-val', pBoxer.toFixed(2));
@@ -609,19 +607,16 @@ async function fetchAllData(address) {
             const claimText = document.getElementById('pending-claim-text');
             if(claimText) claimText.innerText = `Pending: ${totalP.toFixed(2)} USDT`;
             
-          
             const totalClaimVal = document.getElementById('total-pending-claim');
             if(totalClaimVal) totalClaimVal.innerText = totalP.toFixed(2);
             
-           
             const claimBtn = document.getElementById('claim-btn');
             if(claimBtn) {
                 claimBtn.disabled = totalP <= 0;
             }
-            
         } catch(e) { console.log("Pending sub-fetch error:", e); }
 
-      
+        // --- Package Logic ---
         let maxActive = -1;
         const activeStatusArray = await activeContract.getUserActivePackages(address);
         for (let i = 0; i < 12; i++) {
@@ -631,10 +626,8 @@ async function fetchAllData(address) {
         window.userData.currentPackageId = maxActive;
         if (typeof renderPackages === "function") renderPackages(maxActive);
 
-       
         const rankHeader = document.getElementById('current-rank-header');
         if(rankHeader) {
-            
             rankHeader.innerText = maxActive >= 0 ? "PACKAGE: G" + maxActive : "PACKAGE: NONE";
         }
     } catch (e) { 
