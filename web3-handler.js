@@ -14,6 +14,7 @@ const CONTRACT_ABI = [
     "function buyPackage(uint256 _pkgId) external",
     "function withdraw() external",
     "function claimAllIncomes() external", 
+    "function getClaimPercentage(address _user) view returns (uint256)",
     "function users(address) view returns (uint256 id, address referrer, uint256 registrationTime, uint256 balance, uint256 totalEarned, uint256 incomeCap, uint256 directCount, uint256 directIncome, uint256 levelIncome, uint256 singleLegIncome, uint256 matrixIncome, uint256 dailyIncome, uint256 rewardIncome, uint256 cappingLoss, uint256 fastTrackIncome, bool fastTrackEligible)",
     "function getTeamTree2x2(address _user) view returns (address level1_Left, address level1_Right, address level2_Pos1, address level2_Pos2, address level2_Pos3, address level2_Pos4)",
     "function getMatrixTree(uint256 _pkgId, uint256 _index) view returns (address ownerAddr, uint256 filledCount, uint256 ownerRebirths, address slotA, address slotB, address slotC)",
