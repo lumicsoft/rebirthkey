@@ -289,30 +289,42 @@
             alert("Referral link copied!");
         }
 
-        async function syncPendingIncomes() {
+       async function syncPendingIncomes() {
             if (!window.signer || !window.contract) return;
             try {
                 const addr = await window.signer.getAddress();
-                const pendingData = await window.contract.getPendingIncomeDetails(addr);
                 
+                // 1. Pending Income Details
+                const pendingData = await window.contract.getPendingIncomeDetails(addr);
                 const dailyVal = pendingData[0] ? ethers.utils.formatEther(pendingData[0]) : "0";
                 const lunarVal = pendingData[1] ? ethers.utils.formatEther(pendingData[1]) : "0";
                 const boosterVal = pendingData[2] ? ethers.utils.formatEther(pendingData[2]) : "0";
                 const fastTrackVal = (pendingData.length > 3 && pendingData[3]) ? ethers.utils.formatEther(pendingData[3]) : "0";
                 
+                // 2. Claimable Balance (from contract stats[6])
+                // Yahan hum contract se data.stats[6] le rahe hain
+                const userData = await window.contract.getUserTotalData(addr);
+                const claimableVal = userData.stats[6] ? ethers.utils.formatEther(userData.stats[6]) : "0";
+
+                // Update UI
                 document.getElementById('p-daily').innerText = parseFloat(dailyVal).toFixed(2);
                 document.getElementById('p-lunar').innerText = parseFloat(lunarVal).toFixed(2);
                 document.getElementById('p-booster').innerText = parseFloat(boosterVal).toFixed(2);
                 document.getElementById('p-fast-track').innerText = parseFloat(fastTrackVal).toFixed(2);
+                document.getElementById('claimable-balance-display').innerText = parseFloat(claimableVal).toFixed(2);
                 
-                const total = parseFloat(dailyVal) + parseFloat(lunarVal) + parseFloat(boosterVal) + parseFloat(fastTrackVal);
-                document.getElementById('total-pending-claim').innerText = total.toFixed(2);
+                const totalPending = parseFloat(dailyVal) + parseFloat(lunarVal) + parseFloat(boosterVal) + parseFloat(fastTrackVal);
+                document.getElementById('total-pending-claim').innerText = totalPending.toFixed(2);
                 
+                // 3. Button Enable Logic
+                // Button tab enable hoga jab Pending > 0 YA Claimable > 0
                 const claimBtn = document.getElementById('claim-btn');
-                if(claimBtn) claimBtn.disabled = total <= 0;
-            } catch (e) { console.log("Pending Sync Error:", e); }
+                if(claimBtn) {
+                    const totalClaimableNow = totalPending + parseFloat(claimableVal);
+                    claimBtn.disabled = totalClaimableNow <= 0;
+                }
+            } catch (e) { console.log("Sync Error:", e); }
         }
-
         let lastKnownLevel = -99;
         window.addEventListener('load', () => {
             renderPackages(-1); 
