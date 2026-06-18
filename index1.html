@@ -130,6 +130,10 @@
                     <p id="claimable-balance-display" class="text-xl font-black orbitron text-green-400">0.00</p>
                 </div>
                 <div class="text-center">
+                    <p class="text-[9px] text-gray-500 uppercase font-bold">Claim Rate</p>
+                    <p id="claim-percentage-display" class="text-xl font-black orbitron text-yellow-500">0%</p>
+                </div>
+                <div class="text-center">
                     <p class="text-[9px] text-gray-500 uppercase font-bold">Total Pending</p>
                     <p id="total-pending-claim" class="text-2xl font-black orbitron text-white">0.00</p>
                 </div>
@@ -289,22 +293,22 @@
             alert("Referral link copied!");
         }
 
-       async function syncPendingIncomes() {
+        async function syncPendingIncomes() {
             if (!window.signer || !window.contract) return;
             try {
                 const addr = await window.signer.getAddress();
                 
-                // 1. Pending Income Details
                 const pendingData = await window.contract.getPendingIncomeDetails(addr);
                 const dailyVal = pendingData[0] ? ethers.utils.formatEther(pendingData[0]) : "0";
                 const lunarVal = pendingData[1] ? ethers.utils.formatEther(pendingData[1]) : "0";
                 const boosterVal = pendingData[2] ? ethers.utils.formatEther(pendingData[2]) : "0";
                 const fastTrackVal = (pendingData.length > 3 && pendingData[3]) ? ethers.utils.formatEther(pendingData[3]) : "0";
                 
-                // 2. Claimable Balance (from contract stats[6])
-                // Yahan hum contract se data.stats[6] le rahe hain
                 const userData = await window.contract.getUserTotalData(addr);
                 const claimableVal = userData.stats[6] ? ethers.utils.formatEther(userData.stats[6]) : "0";
+                
+                // Get Percentage from contract
+                const percent = await window.contract.getClaimPercentage(addr);
 
                 // Update UI
                 document.getElementById('p-daily').innerText = parseFloat(dailyVal).toFixed(2);
@@ -313,11 +317,12 @@
                 document.getElementById('p-fast-track').innerText = parseFloat(fastTrackVal).toFixed(2);
                 document.getElementById('claimable-balance-display').innerText = parseFloat(claimableVal).toFixed(2);
                 
+                // Set Percentage
+                document.getElementById('claim-percentage-display').innerText = percent.toString() + "%";
+                
                 const totalPending = parseFloat(dailyVal) + parseFloat(lunarVal) + parseFloat(boosterVal) + parseFloat(fastTrackVal);
                 document.getElementById('total-pending-claim').innerText = totalPending.toFixed(2);
                 
-                // 3. Button Enable Logic
-                // Button tab enable hoga jab Pending > 0 YA Claimable > 0
                 const claimBtn = document.getElementById('claim-btn');
                 if(claimBtn) {
                     const totalClaimableNow = totalPending + parseFloat(claimableVal);
@@ -325,6 +330,7 @@
                 }
             } catch (e) { console.log("Sync Error:", e); }
         }
+
         let lastKnownLevel = -99;
         window.addEventListener('load', () => {
             renderPackages(-1); 
