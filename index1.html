@@ -105,17 +105,14 @@
             </div>
 
             <div class="gold-border-fixed p-6 flex flex-col justify-center">
-                <div class="flex justify-between items-center mb-3 px-1">
-                    <p class="text-[10px] text-yellow-500 font-black uppercase tracking-widest">Your Referral Link</p>
-                    <a href="https://t.me/rebirthkeysupport" target="_blank" class="flex items-center gap-1 text-cyan-400 hover:text-white transition">
-                        <i data-lucide="send" class="w-3 h-3"></i>
-                        <span class="text-[9px] font-bold uppercase">Support</span>
-                    </a>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-[9px] text-yellow-500 font-black uppercase tracking-widest">Capping Status</p>
+                    <p id="rem-cap-val" class="text-[10px] text-white font-bold">Rem: 0</p>
                 </div>
-                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-yellow-500/30">
-                    <input id="refURL" type="text" readonly value="Syncing..." class="bg-transparent border-none outline-none w-full text-[10px] text-gray-400 font-mono">
-                    <button onclick="copyLink()" class="text-yellow-500 hover:scale-110 transition"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                    <div id="cap-progress" class="bg-yellow-500 h-full w-[0%] transition-all duration-500"></div>
                 </div>
+                <p class="text-[9px] text-gray-500 mt-2">Earned: <span id="earned-val">0</span> / Total Limit</p>
             </div>
         </div>
 
@@ -306,6 +303,16 @@
                 
                 const userData = await window.contract.getUserTotalData(addr);
                 const claimableVal = userData.stats[6] ? ethers.utils.formatEther(userData.stats[6]) : "0";
+                
+                // Capping Logic Calculation
+                const totalCap = parseFloat(ethers.utils.formatEther(userData.stats[3]));
+                const totalEarned = parseFloat(ethers.utils.formatEther(userData.stats[2]));
+                const remaining = totalCap > totalEarned ? (totalCap - totalEarned) : 0;
+                
+                document.getElementById('earned-val').innerText = totalEarned.toFixed(2);
+                document.getElementById('rem-cap-val').innerText = "Rem: " + remaining.toFixed(2);
+                const progress = totalCap > 0 ? (totalEarned / totalCap) * 100 : 0;
+                document.getElementById('cap-progress').style.width = Math.min(progress, 100) + "%";
                 
                 // Get Percentage from contract
                 const percent = await window.contract.getClaimPercentage(addr);
