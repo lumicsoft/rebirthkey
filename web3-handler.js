@@ -1,5 +1,5 @@
 let provider, signer, contract, usdtContract;
-const CONTRACT_ADDRESS = "0xBB0B70682d45772972F2D765b97854342DB82ef5"; 
+const CONTRACT_ADDRESS = "0x28e586fe216Ef2E747b70Ae85db333400613e725"; 
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
 
 window.userData = {
